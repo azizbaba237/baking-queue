@@ -1,0 +1,133 @@
+{% extends 'base.html' %}
+
+{% block title %}Prendre un ticket - {{ service.name }}{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto">
+    <!-- Service Info -->
+    <div class="card mb-8">
+        <div class="flex items-center mb-4">
+            <div class="w-6 h-6 rounded-full mr-4" {{ service.color }}></div>
+            <h1 class="text-3xl font-bold text-bank-dark-gray">{{ service.name }}</h1>
+        </div>
+        <p class="text-bank-gray mb-6">{{ service.description }}</p>
+        
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+            <div class="bg-bank-light-gray rounded-lg p-4 text-center">
+                <i class="fas fa-clock text-2xl text-bank-blue mb-2"></i>
+                <div class="text-lg font-semibold">{{ service.estimated_duration }}min</div>
+                <div class="text-sm text-bank-gray">Durée estimée</div>
+            </div>
+            <div class="bg-bank-light-gray rounded-lg p-4 text-center">
+                <i class="fas fa-users text-2xl text-bank-blue mb-2"></i>
+                <div class="text-lg font-semibold">{{ queue_length }}</div>
+                <div class="text-sm text-bank-gray">Personnes en attente</div>
+            </div>
+            <div class="bg-bank-light-gray rounded-lg p-4 text-center">
+                <i class="fas fa-hourglass-half text-2xl text-bank-blue mb-2"></i>
+                <div class="text-lg font-semibold">{{ estimated_wait }}min</div>
+                <div class="text-sm text-bank-gray">Temps d'attente</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Ticket Form -->
+    <div class="card">
+        <h2 class="text-2xl font-bold text-bank-dark-gray mb-6 flex items-center">
+            <i class="fas fa-ticket-alt mr-3 text-bank-blue"></i>
+            Prendre votre ticket
+        </h2>
+        
+        <form method="post" class="space-y-6">
+            {% csrf_token %}
+            
+            <!-- Client Info -->
+            <div class="bg-bank-light-gray rounded-lg p-4">
+                <h3 class="font-semibold text-bank-dark-gray mb-3">Informations client</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="form-label">Nom complet</label>
+                        <input type="text" class="form-input" value="{{ user.first_name }} {{ user.last_name }}" readonly>
+                    </div>
+                    <div>
+                        <label class="form-label">Type de client</label>
+                        <input type="text" class="form-input" value="{{ user.client.get_client_type_display }}" readonly>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Priority Info -->
+            {% if user.client.client_type == 'vip' or user.client.client_type == 'senior' %}
+                <div class="bg-bank-gold bg-opacity-10 border border-bank-gold rounded-lg p-4">
+                    <div class="flex items-center">
+                        <i class="fas fa-star text-bank-gold mr-3"></i>
+                        <div>
+                            <h4 class="font-semibold text-bank-dark-gray">Priorité accordée</h4>
+                            <p class="text-sm text-bank-gray">En tant que client {{ user.client.get_client_type_display }}, vous bénéficiez d'une priorité dans la file d'attente.</p>
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+
+            <!-- Notification Preferences -->
+            <div>
+                <label class="form-label">Notifications</label>
+                <div class="space-y-2">
+                    <label class="flex items-center">
+                        <input type="checkbox" name="sms_notification" class="mr-3" checked>
+                        <i class="fas fa-sms mr-2 text-bank-blue"></i>
+                        Notification par SMS
+                    </label>
+                    <label class="flex items-center">
+                        <input type="checkbox" name="email_notification" class="mr-3" checked>
+                        <i class="fas fa-envelope mr-2 text-bank-blue"></i>
+                        Notification par email
+                    </label>
+                </div>
+            </div>
+
+            <!-- Terms -->
+            <div class="bg-bank-light-gray rounded-lg p-4">
+                <label class="flex items-start">
+                    <input type="checkbox" name="accept_terms" class="mr-3 mt-1" required>
+                    <span class="text-sm text-bank-gray">
+                        J'accepte les <a href="#" class="text-bank-blue hover:underline">conditions d'utilisation</a> 
+                        et je comprends que je serai notifié lorsque mon tour arrivera.
+                    </span>
+                </label>
+            </div>
+
+            <!-- Submit Button -->
+            <div class="flex space-x-4">
+                <button type="submit" class="btn-primary flex-1">
+                    <i class="fas fa-ticket-alt mr-2"></i>
+                    Prendre le ticket
+                </button>
+                <a href="{% url 'queue_system:home' %}" class="btn-secondary">
+                    <i class="fas fa-arrow-left mr-2"></i>
+                    Annuler
+                </a>
+            </div>
+        </form>
+    </div>
+
+    <!-- Info Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8">
+        <div class="bg-bank-light-gray rounded-lg p-4 text-center">
+            <i class="fas fa-info-circle text-2xl text-bank-blue mb-2"></i>
+            <h3 class="text-lg font-semibold text-bank-dark-gray">Comment ça marche ?</h3>
+            <p class="text-sm text-bank-gray">Prenez un ticket en ligne, attendez votre tour et recevez une notification quand c'est à vous.</p>
+        </div>
+        <div class="bg-bank-light-gray rounded-lg p-4 text-center">
+            <i class="fas fa-users text-2xl text-bank-blue mb-2"></i>
+            <h3 class="text-lg font-semibold text-bank-dark-gray">File d'attente</h3>
+            <p class="text-sm text-bank-gray">Visualisez le nombre de personnes en attente et le temps estimé avant votre tour.</p>
+        </div>
+        <div class="bg-bank-light-gray rounded-lg p-4 text-center">
+            <i class="fas fa-mobile-alt text-2xl text-bank-blue mb-2"></i>
+            <h3 class="text-lg font-semibold text-bank-dark-gray">Notifications</h3>
+            <p class="text-sm text-bank-gray">Recevez des notifications par SMS ou email pour ne pas manquer votre tour.</p>
+        </div>
+    </div>
+</div>
+{% endblock %}

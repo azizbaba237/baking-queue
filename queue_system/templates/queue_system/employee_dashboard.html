@@ -1,0 +1,152 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}
+Tableau de bord employé – Système de File d'Attente
+{% endblock %}
+
+{% block content %}
+<div class="space-y-10">
+
+  <!-- En‑tête -->
+  <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+    <div>
+      <h1 class="text-3xl font-bold text-bank-dark-gray">Bonjour {{ request.user.first_name }} !</h1>
+      <p class="text-bank-gray mt-1">Suivez et gérez la file d’attente en temps réel</p>
+    </div>
+  </div>
+
+  <!-- Statistiques du jour -->
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+    <div class="stat-card">
+      <div class="stat-value text-bank-blue">{{ stats.waiting }}</div>
+      <div class="stat-label">En attente</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value text-bank-gold">{{ stats.in_service }}</div>
+      <div class="stat-label">En service</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value text-bank-green">{{ stats.completed }}</div>
+      <div class="stat-label">Terminés</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value text-bank-red">{{ stats.cancelled }}</div>
+      <div class="stat-label">Annulés</div>
+    </div>
+  </div>
+
+  <!-- Temps d'attente moyen -->
+  <div class="flex items-center space-x-2">
+    <i class="fas fa-hourglass-half text-bank-blue"></i>
+    <p class="text-bank-gray">
+      Temps d’attente moyen aujourd’hui : <span class="font-semibold text-bank-dark-gray">{{ stats.avg_wait }} min</span>
+    </p>
+  </div>
+
+  <!-- Ticket en cours de service -->
+  {% if current_ticket %}
+  <div class="card">
+    <h2 class="text-lg font-semibold text-bank-dark-gray mb-4 flex items-center">
+      <i class="fas fa-user-check mr-2 text-bank-blue"></i>
+      Ticket en cours
+    </h2>
+
+    <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
+      <div class="flex items-center gap-4">
+        <div class="w-16 h-16 rounded-lg bg-bank-blue flex items-center justify-center text-white text-3xl font-bold">
+          {{ current_ticket.ticket_number }}
+        </div>
+        <div>
+          <p class="text-bank-dark-gray font-medium">{{ current_ticket.service.name }}</p>
+          <p class="text-sm text-bank-gray">{{ current_ticket.created_at|date:"d/m/Y H:i" }}</p>
+        </div>
+      </div>
+
+      <div class="flex gap-3">
+        <form method="post" action="{% url 'queue_system:complete_ticket' current_ticket.id %}">
+          {% csrf_token %}
+          <button class="btn-primary">
+            <i class="fas fa-check-circle mr-2"></i>Marquer terminé
+          </button>
+        </form>
+        <form method="post" action="{% url 'queue_system:cancel_ticket' current_ticket.id %}">
+          {% csrf_token %}
+          <button class="btn-outline-danger">
+            <i class="fas fa-times-circle mr-2"></i>Annuler
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Tickets en attente -->
+  <div class="card overflow-x-auto">
+    <div class="flex items-center justify-between mb-4">
+      <h2 class="text-lg font-semibold text-bank-dark-gray flex items-center">
+        <i class="fas fa-list-ol mr-2 text-bank-blue"></i>
+        Files d’attente
+      </h2>
+
+      <form method="post" action="{% url 'queue_system:call_next_ticket' %}">
+        {% csrf_token %}
+        <button class="btn-primary">
+          <i class="fas fa-bell mr-2"></i>Appeler le suivant
+        </button>
+      </form>
+    </div>
+
+    <table class="min-w-full text-sm">
+      <thead>
+        <tr class="text-left text-bank-gray border-b">
+          <th class="py-2 px-3">N°</th>
+          <th class="py-2 px-3">Service</th>
+          <th class="py-2 px-3">Créé à</th>
+          <th class="py-2 px-3">Position</th>
+          <th class="py-2 px-3 text-center">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for ticket in waiting_tickets %}
+        <tr class="border-b hover:bg-gray-50">
+          <td class="py-2 px-3 font-semibold text-bank-dark-gray">{{ ticket.ticket_number }}</td>
+          <td class="py-2 px-3">{{ ticket.service.name }}</td>
+          <td class="py-2 px-3">{{ ticket.created_at|date:"H:i" }}</td>
+          <td class="py-2 px-3">{{ ticket.position }}</td>
+          <td class="py-2 px-3">
+            <div class="flex justify-center gap-2">
+              <!-- Appeler -->
+              <form method="post" action="{% url 'queue_system:call_ticket' ticket.id %}">
+                {% csrf_token %}
+                <button class="btn-small btn-primary" title="Appeler">
+                  <i class="fas fa-bell"></i>
+                </button>
+              </form>
+              <!-- Servir -->
+              <form method="post" action="{% url 'queue_system:start_service' ticket.id %}">
+                {% csrf_token %}
+                <button class="btn-small btn-secondary" title="Servir">
+                  <i class="fas fa-play"></i>
+                </button>
+              </form>
+              <!-- Annuler -->
+              <form method="post" action="{% url 'queue_system:cancel_ticket' ticket.id %}">
+                {% csrf_token %}
+                <button class="btn-small btn-outline-danger" title="Annuler">
+                  <i class="fas fa-times"></i>
+                </button>
+              </form>
+            </div>
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="5" class="py-4 text-center text-bank-gray">Aucun ticket en attente pour le moment.</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

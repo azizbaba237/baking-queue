@@ -1,0 +1,145 @@
+{% extends 'base.html' %}
+
+{% block title %}Accueil - Système de File d'Attente{% endblock %}
+
+{% block content %}
+<div class="space-y-8">
+    <!-- Hero Section -->
+    <div class="bg-gradient-to-r from-bank-blue to-bank-light-blue rounded-lg text-white p-8 text-center">
+        <h1 class="text-4xl font-bold mb-4">Bienvenue dans votre banque</h1>
+        <p class="text-xl mb-6">Prenez votre ticket en ligne et évitez l'attente</p>
+        <div class="flex justify-center space-x-4">
+            <div class="bg-white bg-opacity-20 rounded-lg p-4">
+                <i class="fas fa-clock text-3xl mb-2"></i>
+                <p class="text-sm">Temps d'attente réduit</p>
+            </div>
+            <div class="bg-white bg-opacity-20 rounded-lg p-4">
+                <i class="fas fa-mobile-alt text-3xl mb-2"></i>
+                <p class="text-sm">Notifications en temps réel</p>
+            </div>
+            <div class="bg-white bg-opacity-20 rounded-lg p-4">
+                <i class="fas fa-chart-line text-3xl mb-2"></i>
+                <p class="text-sm">Suivi en ligne</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Services Section -->
+    <div>
+        <h2 class="text-3xl font-bold text-bank-dark-gray mb-8 text-center">Nos Services</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {% for service in services %}
+                <div class="card hover:scale-105 transform transition-transform duration-200">
+                    <div class="flex items-center mb-4">
+                        <div class="w-4 h-4 rounded-full mr-3" style="background-color: {{ service.color }}"></div>
+                        <h3 class="text-xl font-semibold text-bank-dark-gray">{{ service.name }}</h3>
+                    </div>
+                    <p class="text-bank-gray mb-4">{{ service.description }}</p>
+                    <div class="flex justify-between items-center mb-4">
+                        <span class="text-sm text-bank-gray flex items-center">
+                            <i class="fas fa-clock mr-2"></i>
+                            ~{{ service.estimated_duration }} min
+                        </span>
+                        <span class="text-sm text-bank-gray flex items-center">
+                            <i class="fas fa-users mr-2"></i>
+                            {{ service.ticket_set.waiting.count }} en attente
+                        </span>
+                    </div>
+                    {% if user.is_authenticated %}
+                        <a href="{% url 'queue_system:take_ticket' service.id %}" class="btn-primary w-full text-center">
+                            <i class="fas fa-ticket-alt mr-2"></i>
+                            Prendre un ticket
+                        </a>
+                    {% else %}
+                        <a href="{% url 'accounts:login' %}" class="btn-secondary w-full text-center">
+                            <i class="fas fa-sign-in-alt mr-2"></i>
+                            Se connecter pour prendre un ticket
+                        </a>
+                    {% endif %}
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Queue Status -->
+    <div class="bg-white rounded-lg shadow-md p-6">
+        <h2 class="text-2xl font-bold text-bank-dark-gray mb-6 flex items-center">
+            <i class="fas fa-chart-bar mr-3 text-bank-blue"></i>
+            État des files d'attente
+        </h2>
+        <div class="overflow-x-auto">
+            <table class="w-full text-left">
+                <thead>
+                    <tr class="border-b border-gray-200">
+                        <th class="py-3 px-4 font-semibold text-bank-dark-gray">Service</th>
+                        <th class="py-3 px-4 font-semibold text-bank-dark-gray">En attente</th>
+                        <th class="py-3 px-4 font-semibold text-bank-dark-gray">Temps d'attente</th>
+                        <th class="py-3 px-4 font-semibold text-bank-dark-gray">Statut</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for service in services %}
+                        <tr class="border-b border-gray-100 hover:bg-bank-light-gray transition-colors">
+                            <td class="py-3 px-4">
+                                <div class="flex items-center">
+                                    <div class="w-3 h-3 rounded-full mr-3" style="background-color: {{ service.color }}"></div>
+                                    {{ service.name }}
+                                </div>
+                            </td>
+                            <td class="py-3 px-4">
+                                <span class="bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full text-sm font-medium">
+                                    {{ service.ticket_set.waiting.count }} personnes
+                                </span>
+                            </td>
+                            <td class="py-3 px-4">
+                                <span class="flex items-center text-bank-gray">
+                                    <i class="fas fa-clock mr-2"></i>
+                                    ~{{ service.estimated_duration }} min
+                                </span>
+                            </td>
+                            <td class="py-3 px-4">
+                                <span class="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-medium">
+                                    <i class="fas fa-check-circle mr-1"></i>
+                                    Actif
+                                </span>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Current User Ticket -->
+    {% if user.is_authenticated and user.role == 'client' %}
+        {% if current_ticket %}
+            <div class="bg-gradient-to-r from-bank-gold to-bank-light-gold rounded-lg p-6 text-white">
+                <h3 class="text-xl font-bold mb-4 flex items-center">
+                    <i class="fas fa-ticket-alt mr-3"></i>
+                    Votre ticket actuel
+                </h3>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="text-center">
+                        <div class="text-3xl font-bold">{{ current_ticket.ticket_number }}</div>
+                        <div class="text-sm opacity-80">Numéro de ticket</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-3xl font-bold">{{ current_ticket.position }}</div>
+                        <div class="text-sm opacity-80">Position dans la file</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-3xl font-bold">{{ current_ticket.estimated_wait_time }}min</div>
+                        <div class="text-sm opacity-80">Temps d'attente estimé</div>
+                    </div>
+                </div>
+                <div class="mt-4 text-center">
+                    <a href="{% url 'queue_system:ticket_status' current_ticket.id %}" class="bg-white text-bank-gold px-6 py-2 rounded-lg font-medium hover:bg-gray-100 transition-colors">
+                        <i class="fas fa-eye mr-2"></i>
+                        Voir les détails
+                    </a>
+                </div>
+            </div>
+        {% endif %}
+    {% endif %}
+</div>
+{% endblock %}

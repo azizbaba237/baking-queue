@@ -1,0 +1,439 @@
+{% extends 'base.html' %}
+
+{% block title %}Mon Profil - Système de File d'Attente{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <!-- Header -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+        <div>
+            <h1 class="text-3xl font-bold text-bank-dark-gray">Mon Profil</h1>
+            <p class="mt-2 text-bank-gray">Gérez vos informations personnelles et préférences</p>
+        </div>
+        <div class="mt-4 sm:mt-0">
+            <a href="{% url 'queue_system:home' %}" class="btn-secondary">
+                <i class="fas fa-arrow-left mr-2"></i>
+                Retour à l'accueil
+            </a>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Profile Summary Card -->
+        <div class="lg:col-span-1">
+            <div class="card">
+                <div class="text-center">
+                    <!-- Avatar -->
+                    <div class="mb-4">
+                        <div class="w-24 h-24 bg-bank-blue rounded-full flex items-center justify-center mx-auto">
+                            <i class="fas fa-user text-white text-3xl"></i>
+                        </div>
+                    </div>
+                    
+                    <!-- User Info -->
+                    <h2 class="text-xl font-semibold text-bank-dark-gray">
+                        {{ user.first_name }} {{ user.last_name }}
+                    </h2>
+                    <p class="text-bank-gray">@{{ user.username }}</p>
+                    
+                    <!-- Role Badge -->
+                    <div class="mt-3">
+                        <span class="{% if user.role == 'admin' %}bg-bank-red{% elif user.role == 'employee' %}bg-bank-blue{% else %}bg-bank-green{% endif %} text-white px-3 py-1 rounded-full text-sm font-medium">
+                            {% if user.role == 'admin' %}
+                                <i class="fas fa-crown mr-1"></i>Administrateur
+                            {% elif user.role == 'employee' %}
+                                <i class="fas fa-user-tie mr-1"></i>Employé
+                            {% else %}
+                                <i class="fas fa-user mr-1"></i>Client
+                            {% endif %}
+                        </span>
+                    </div>
+                    
+                    <!-- Member Since -->
+                    <div class="mt-4 text-sm text-bank-gray">
+                        <i class="fas fa-calendar mr-2"></i>
+                        Membre depuis {{ user.date_joined|date:"F Y" }}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Stats -->
+            {% if user.role == 'client' %}
+                <div class="card mt-6">
+                    <h3 class="text-lg font-semibold text-bank-dark-gray mb-4">
+                        <i class="fas fa-chart-bar mr-2 text-bank-blue"></i>
+                        Statistiques
+                    </h3>
+                    
+                    <div class="space-y-3">
+                        <div class="flex justify-between items-center">
+                            <span class="text-bank-gray">Tickets totaux</span>
+                            <span class="font-semibold text-bank-dark-gray">{{ user.ticket_set.count }}</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-bank-gray">Tickets terminés</span>
+                            <span class="font-semibold text-bank-green">{{ user.ticket_set.completed.count }}</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-bank-gray">Tickets en attente</span>
+                            <span class="font-semibold text-bank-gold">{{ user.ticket_set.waiting.count }}</span>
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Main Content -->
+        <div class="lg:col-span-2 space-y-6">
+            <!-- Personal Information -->
+            <div class="card">
+                <div class="flex items-center justify-between mb-6">
+                    <h3 class="text-lg font-semibold text-bank-dark-gray">
+                        <i class="fas fa-user mr-2 text-bank-blue"></i>
+                        Informations personnelles
+                    </h3>
+                    <button id="edit-profile-btn" class="btn-primary">
+                        <i class="fas fa-edit mr-2"></i>
+                        Modifier
+                    </button>
+                </div>
+
+                <form id="profile-form" method="post">
+                    {% csrf_token %}
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <!-- First Name -->
+                        <div>
+                            <label for="first_name" class="form-label">Prénom</label>
+                            <input 
+                                type="text" 
+                                id="first_name" 
+                                name="first_name" 
+                                class="form-input" 
+                                value="{{ user.first_name }}"
+                                readonly
+                            >
+                        </div>
+
+                        <!-- Last Name -->
+                        <div>
+                            <label for="last_name" class="form-label">Nom</label>
+                            <input 
+                                type="text" 
+                                id="last_name" 
+                                name="last_name" 
+                                class="form-input" 
+                                value="{{ user.last_name }}"
+                                readonly
+                            >
+                        </div>
+
+                        <!-- Email -->
+                        <div>
+                            <label for="email" class="form-label">Email</label>
+                            <input 
+                                type="email" 
+                                id="email" 
+                                name="email" 
+                                class="form-input" 
+                                value="{{ user.email }}"
+                                readonly
+                            >
+                        </div>
+
+                        <!-- Phone -->
+                        <div>
+                            <label for="phone" class="form-label">Téléphone</label>
+                            <input 
+                                type="tel" 
+                                id="phone" 
+                                name="phone" 
+                                class="form-input" 
+                                value="{{ user.phone|default:'' }}"
+                                readonly
+                            >
+                        </div>
+
+                        <!-- Username -->
+                        <div>
+                            <label for="username" class="form-label">Nom d'utilisateur</label>
+                            <input 
+                                type="text" 
+                                id="username" 
+                                name="username" 
+                                class="form-input bg-gray-50" 
+                                value="{{ user.username }}"
+                                readonly
+                                disabled
+                            >
+                        </div>
+
+                        <!-- Role -->
+                        <div>
+                            <label for="role" class="form-label">Rôle</label>
+                            <input 
+                                type="text" 
+                                id="role" 
+                                name="role" 
+                                class="form-input bg-gray-50" 
+                                value="{% if user.role == 'admin' %}Administrateur{% elif user.role == 'employee' %}Employé{% else %}Client{% endif %}"
+                                readonly
+                                disabled
+                            >
+                        </div>
+                    </div>
+
+                    <!-- Form Actions -->
+                    <div id="form-actions" class="flex justify-end space-x-3 mt-6 hidden">
+                        <button type="button" id="cancel-edit-btn" class="btn-secondary">
+                            <i class="fas fa-times mr-2"></i>
+                            Annuler
+                        </button>
+                        <button type="submit" class="btn-success">
+                            <i class="fas fa-save mr-2"></i>
+                            Sauvegarder
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Security Settings -->
+            <div class="card">
+                <h3 class="text-lg font-semibold text-bank-dark-gray mb-6">
+                    <i class="fas fa-shield-alt mr-2 text-bank-blue"></i>
+                    Sécurité
+                </h3>
+
+                <div class="space-y-4">
+                    <!-- Change Password -->
+                    <div class="flex items-center justify-between p-4 bg-bank-light-gray rounded-lg">
+                        <div>
+                            <h4 class="font-medium text-bank-dark-gray">Changer le mot de passe</h4>
+                            <p class="text-sm text-bank-gray">Modifiez votre mot de passe pour sécuriser votre compte</p>
+                        </div>
+                        <button id="change-password-btn" class="btn-primary">
+                            <i class="fas fa-key mr-2"></i>
+                            Changer
+                        </button>
+                    </div>
+
+                    <!-- Two-Factor Authentication -->
+                    <div class="flex items-center justify-between p-4 bg-bank-light-gray rounded-lg">
+                        <div>
+                            <h4 class="font-medium text-bank-dark-gray">Authentification à deux facteurs</h4>
+                            <p class="text-sm text-bank-gray">Renforcez la sécurité de votre compte</p>
+                        </div>
+                        <button class="btn-secondary">
+                            <i class="fas fa-mobile-alt mr-2"></i>
+                            Configurer
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Activity -->
+            {% if user.role == 'client' %}
+                <div class="card">
+                    <h3 class="text-lg font-semibold text-bank-dark-gray mb-6">
+                        <i class="fas fa-history mr-2 text-bank-blue"></i>
+                        Activité récente
+                    </h3>
+
+                    <div class="space-y-4">
+                        {% for ticket in user.ticket_set.all|slice:":5" %}
+                            <div class="flex items-center justify-between p-4 bg-bank-light-gray rounded-lg">
+                                <div class="flex items-center">
+                                    <div class="w-2 h-2 rounded-full mr-3" style="background-color: {{ ticket.service.color }}"></div>
+                                    <div>
+                                        <h4 class="font-medium text-bank-dark-gray">{{ ticket.service.name }}</h4>
+                                        <p class="text-sm text-bank-gray">Ticket #{{ ticket.ticket_number }}</p>
+                                    </div>
+                                </div>
+                                <div class="text-right">
+                                    <span class="status-{{ ticket.status }} text-xs px-2 py-1">
+                                        {% if ticket.status == 'waiting' %}En attente
+                                        {% elif ticket.status == 'called' %}Appelé
+                                        {% elif ticket.status == 'in_service' %}En service
+                                        {% elif ticket.status == 'completed' %}Terminé
+                                        {% elif ticket.status == 'cancelled' %}Annulé
+                                        {% endif %}
+                                    </span>
+                                    <p class="text-xs text-bank-gray mt-1">{{ ticket.created_at|date:"d/m/Y" }}</p>
+                                </div>
+                            </div>
+                        {% empty %}
+                            <div class="text-center py-8">
+                                <i class="fas fa-ticket-alt text-bank-gray text-3xl mb-4"></i>
+                                <p class="text-bank-gray">Aucune activité récente</p>
+                            </div>
+                        {% endfor %}
+                    </div>
+
+                    {% if user.ticket_set.count > 5 %}
+                        <div class="mt-4 text-center">
+                            <a href="#" class="text-bank-blue hover:text-blue-700 font-medium">
+                                Voir toute l'activité
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Change Password Modal -->
+<div id="password-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden z-50">
+    <div class="flex items-center justify-center min-h-screen p-4">
+        <div class="bg-white rounded-lg shadow-lg max-w-md w-full">
+            <div class="p-6">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-semibold text-bank-dark-gray">
+                        <i class="fas fa-key mr-2 text-bank-blue"></i>
+                        Changer le mot de passe
+                    </h3>
+                    <button id="close-modal-btn" class="text-bank-gray hover:text-bank-dark-gray">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+
+                <form id="password-form" method="post">
+                    {% csrf_token %}
+                    <div class="space-y-4">
+                        <!-- Current Password -->
+                        <div>
+                            <label for="current_password" class="form-label">Mot de passe actuel</label>
+                            <input 
+                                type="password" 
+                                id="current_password" 
+                                name="current_password" 
+                                class="form-input"
+                                required
+                            >
+                        </div>
+
+                        <!-- New Password -->
+                        <div>
+                            <label for="new_password" class="form-label">Nouveau mot de passe</label>
+                            <input 
+                                type="password" 
+                                id="new_password" 
+                                name="new_password" 
+                                class="form-input"
+                                required
+                            >
+                        </div>
+
+                        <!-- Confirm New Password -->
+                        <div>
+                            <label for="confirm_password" class="form-label">Confirmer le nouveau mot de passe</label>
+                            <input 
+                                type="password" 
+                                id="confirm_password" 
+                                name="confirm_password" 
+                                class="form-input"
+                                required
+                            >
+                        </div>
+                    </div>
+
+                    <div class="flex justify-end space-x-3 mt-6">
+                        <button type="button" id="cancel-password-btn" class="btn-secondary">
+                            Annuler
+                        </button>
+                        <button type="submit" class="btn-success">
+                            <i class="fas fa-save mr-2"></i>
+                            Sauvegarder
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Edit Profile
+    const editBtn = document.getElementById('edit-profile-btn');
+    const cancelBtn = document.getElementById('cancel-edit-btn');
+    const formActions = document.getElementById('form-actions');
+    const profileForm = document.getElementById('profile-form');
+    const editableFields = ['first_name', 'last_name', 'email', 'phone'];
+
+    editBtn.addEventListener('click', function() {
+        editableFields.forEach(field => {
+            const input = document.getElementById(field);
+            input.removeAttribute('readonly');
+            input.classList.add('focus:ring-bank-blue', 'focus:border-bank-blue');
+        });
+        
+        editBtn.classList.add('hidden');
+        formActions.classList.remove('hidden');
+    });
+
+    cancelBtn.addEventListener('click', function() {
+        editableFields.forEach(field => {
+            const input = document.getElementById(field);
+            input.setAttribute('readonly', '');
+            input.classList.remove('focus:ring-bank-blue', 'focus:border-bank-blue');
+        });
+        
+        editBtn.classList.remove('hidden');
+        formActions.classList.add('hidden');
+        
+        // Reset form
+        profileForm.reset();
+    });
+
+    // Change Password Modal
+    const passwordModal = document.getElementById('password-modal');
+    const changePasswordBtn = document.getElementById('change-password-btn');
+    const closeModalBtn = document.getElementById('close-modal-btn');
+    const cancelPasswordBtn = document.getElementById('cancel-password-btn');
+
+    changePasswordBtn.addEventListener('click', function() {
+        passwordModal.classList.remove('hidden');
+    });
+
+    closeModalBtn.addEventListener('click', function() {
+        passwordModal.classList.add('hidden');
+    });
+
+    cancelPasswordBtn.addEventListener('click', function() {
+        passwordModal.classList.add('hidden');
+    });
+
+    // Close modal when clicking outside
+    passwordModal.addEventListener('click', function(e) {
+        if (e.target === passwordModal) {
+            passwordModal.classList.add('hidden');
+        }
+    });
+
+    // Password form validation
+    document.getElementById('password-form').addEventListener('submit', function(e) {
+        const newPassword = document.getElementById('new_password').value;
+        const confirmPassword = document.getElementById('confirm_password').value;
+
+        if (newPassword !== confirmPassword) {
+            e.preventDefault();
+            alert('Les nouveaux mots de passe ne correspondent pas.');
+        }
+    });
+
+    // Phone number formatting
+    document.getElementById('phone').addEventListener('input', function(e) {
+        if (!e.target.hasAttribute('readonly')) {
+            let value = e.target.value.replace(/\D/g, '');
+            if (value.startsWith('237')) {
+                value = value.substring(3);
+            }
+            if (value.length > 0) {
+                value = '+237 ' + value.substring(0, 3) + ' ' + value.substring(3, 6) + ' ' + value.substring(6, 9);
+            }
+            e.target.value = value;
+        }
+    });
+</script>
+{% endblock %}

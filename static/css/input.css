@@ -1,0 +1,79 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    font-family: 'Inter', sans-serif;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply bg-bank-blue hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200;
+  }
+  
+  .btn-secondary {
+    @apply bg-bank-light-gray hover:bg-gray-200 text-bank-dark-gray font-medium py-2 px-4 rounded-lg transition-colors duration-200;
+  }
+  
+  .btn-success {
+    @apply bg-bank-green hover:bg-green-600 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200;
+  }
+  
+  .btn-danger {
+    @apply bg-bank-red hover:bg-red-600 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200;
+  }
+  
+  .card {
+    @apply bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow duration-200;
+  }
+  
+  .form-input {
+    @apply block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-bank-blue focus:border-bank-blue;
+  }
+  
+  .form-label {
+    @apply block text-sm font-medium text-bank-dark-gray mb-2;
+  }
+  
+  .alert-success {
+    @apply bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-lg mb-4;
+  }
+  
+  .alert-error {
+    @apply bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg mb-4;
+  }
+  
+  .alert-warning {
+    @apply bg-yellow-100 border border-yellow-400 text-yellow-700 px-4 py-3 rounded-lg mb-4;
+  }
+  
+  .alert-info {
+    @apply bg-blue-100 border border-blue-400 text-blue-700 px-4 py-3 rounded-lg mb-4;
+  }
+  
+  .ticket-card {
+    @apply bg-white rounded-lg shadow-md p-6 border-l-4 border-bank-blue;
+  }
+  
+  .status-waiting {
+    @apply bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full text-sm font-medium;
+  }
+  
+  .status-called {
+    @apply bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium;
+  }
+  
+  .status-in-service {
+    @apply bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-medium;
+  }
+  
+  .status-completed {
+    @apply bg-gray-100 text-gray-800 px-3 py-1 rounded-full text-sm font-medium;
+  }
+  
+  .status-cancelled {
+    @apply bg-red-100 text-red-800 px-3 py-1 rounded-full text-sm font-medium;
+  }
+}

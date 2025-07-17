@@ -1,0 +1,283 @@
+{% extends 'base.html' %} 
+{% block title %}Statut du ticket #{{ ticket.ticket_number }} - Système de File d'Attente{% endblock %} 
+
+{% block content %}
+{% load static %}
+<div class="space-y-6">
+  <!-- Header -->
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+    <div>
+      <h1 class="text-3xl font-bold text-bank-dark-gray">
+        Statut de votre ticket
+      </h1>
+      <p class="mt-2 text-bank-gray">
+        Suivez l'évolution de votre demande en temps réel
+      </p>
+    </div>
+    <div class="mt-4 sm:mt-0">
+      <a href="{% url 'queue_system:home' %}" class="btn-secondary">
+        <i class="fas fa-arrow-left mr-2"></i>
+        Retour à l'accueil
+      </a>
+    </div>
+  </div>
+
+  <!-- Main Ticket Card -->
+  <div class="ticket-card">
+    <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between">
+      <!-- Ticket Info -->
+      <div class="flex-1">
+        <div class="flex items-center mb-4">
+          <div
+            class="w-3 h-3 rounded-full mr-3"
+            {{ ticket.service.color }}
+          ></div>
+          <h2 class="text-xl font-semibold text-bank-dark-gray">
+            {{ ticket.service.name }}
+          </h2>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+          <div class="text-center">
+            <div class="text-3xl font-bold text-bank-blue">
+              {{ ticket.ticket_number }}
+            </div>
+            <div class="text-sm text-bank-gray">Numéro de ticket</div>
+          </div>
+          <div class="text-center">
+            <div class="text-3xl font-bold text-bank-gold">
+              {{ ticket.position }}
+            </div>
+            <div class="text-sm text-bank-gray">Position dans la file</div>
+          </div>
+          <div class="text-center">
+            <div class="text-3xl font-bold text-bank-green">
+              {{ ticket.estimated_wait_time }}min
+            </div>
+            <div class="text-sm text-bank-gray">Temps d'attente estimé</div>
+          </div>
+          <div class="text-center">
+            <div class="text-3xl font-bold text-bank-dark-gray">
+              {{ ticket.created_at|date:"H:i" }}
+            </div>
+            <div class="text-sm text-bank-gray">Heure de création</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Status Badge -->
+      <div class="lg:ml-6">
+        <div class="text-center">
+          <span class="status-{{ ticket.status }} text-lg px-4 py-2">
+            {% if ticket.status == 'waiting' %}
+              <i class="fas fa-clock mr-2"></i>En attente
+            {% elif ticket.status == 'called' %}
+              <i class="fas fa-bell mr-2"></i>Appelé
+            {% elif ticket.status == 'in_service' %}
+              <i class="fas fa-user-check mr-2"></i>En service
+            {% elif ticket.status == 'completed' %}
+              <i class="fas fa-check-circle mr-2"></i>Terminé
+            {% elif ticket.status == 'cancelled' %}
+              <i class="fas fa-times-circle mr-2"></i>Annulé
+            {% endif %}
+          </span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Progress Timeline -->
+  <div class="card">
+    <h3 class="text-lg font-semibold text-bank-dark-gray mb-6 flex items-center">
+      <i class="fas fa-route mr-2 text-bank-blue"></i>
+      Progression de votre demande
+    </h3>
+
+    <div class="relative">
+      <div class="flex flex-col space-y-8">
+
+        <!-- Step 1: Ticket Created -->
+        <div class="flex items-center">
+          <div class="flex-shrink-0">
+            <div class="w-8 h-8 bg-bank-blue rounded-full flex items-center justify-center">
+              <i class="fas fa-ticket-alt text-white text-sm"></i>
+            </div>
+          </div>
+          <div class="ml-4 flex-1">
+            <h4 class="text-sm font-medium text-bank-dark-gray">Ticket créé</h4>
+            <p class="text-sm text-bank-gray">
+              {{ ticket.created_at|date:"d/m/Y à H:i" }}
+            </p>
+          </div>
+          <div class="flex-shrink-0">
+            <i class="fas fa-check text-bank-green"></i>
+          </div>
+        </div>
+
+        <!-- Step 2: In Queue -->
+        <div class="flex items-center">
+          <div class="flex-shrink-0">
+            <div
+              class="w-8 h-8 {% if ticket.status == 'waiting' %}bg-bank-gold{% else %}bg-bank-blue{% endif %} rounded-full flex items-center justify-center"
+            >
+              <i class="fas fa-users text-white text-sm"></i>
+            </div>
+          </div>
+          <div class="ml-4 flex-1">
+            <h4 class="text-sm font-medium text-bank-dark-gray">En file d'attente</h4>
+            <p class="text-sm text-bank-gray">
+              {% if ticket.status == 'waiting' %}
+                Actuellement en position {{ ticket.position }}
+              {% else %}
+                Étape terminée
+              {% endif %}
+            </p>
+          </div>
+          <div class="flex-shrink-0">
+            {% if ticket.status == 'waiting' %}
+              <i class="fas fa-clock text-bank-gold"></i>
+            {% else %}
+              <i class="fas fa-check text-bank-green"></i>
+            {% endif %}
+          </div>
+        </div>
+
+        <!-- Step 3: Called -->
+        <div class="flex items-center">
+          <div class="flex-shrink-0">
+            <div
+              class="w-8 h-8
+                {% if ticket.status == 'called' %}
+                  bg-bank-gold
+                {% elif ticket.status == 'in_service' or ticket.status == 'completed' %}
+                  bg-bank-blue
+                {% else %}
+                  bg-gray-300
+                {% endif %}
+              rounded-full flex items-center justify-center"
+            >
+              <i class="fas fa-bell text-white text-sm"></i>
+            </div>
+          </div>
+          <div class="ml-4 flex-1">
+            <h4 class="text-sm font-medium text-bank-dark-gray">Appelé</h4>
+            <p class="text-sm text-bank-gray">
+              {% if ticket.status == 'called' %}
+                Veuillez vous présenter au guichet.
+              {% elif ticket.status == 'in_service' or ticket.status == 'completed' %}
+                Étape terminée
+              {% else %}
+                En attente d'appel
+              {% endif %}
+            </p>
+          </div>
+          <div class="flex-shrink-0">
+            {% if ticket.status == 'called' %}
+              <i class="fas fa-bell text-bank-gold"></i>
+            {% elif ticket.status == 'in_service' or ticket.status == 'completed' %}
+              <i class="fas fa-check text-bank-green"></i>
+            {% else %}
+              <i class="fas fa-circle text-bank-gray"></i>
+            {% endif %}
+          </div>
+        </div>
+
+        <!-- Step 4: En service -->
+        <div class="flex items-center">
+          <div class="flex-shrink-0">
+            <div
+              class="w-8 h-8
+                {% if ticket.status == 'in_service' %}
+                  bg-bank-gold
+                {% elif ticket.status == 'completed' %}
+                  bg-bank-blue
+                {% else %}
+                  bg-gray-300
+                {% endif %}
+              rounded-full flex items-center justify-center"
+            >
+              <i class="fas fa-user-check text-white text-sm"></i>
+            </div>
+          </div>
+          <div class="ml-4 flex-1">
+            <h4 class="text-sm font-medium text-bank-dark-gray">En service</h4>
+            <p class="text-sm text-bank-gray">
+              {% if ticket.status == 'in_service' %}
+                Votre demande est en cours de traitement
+              {% elif ticket.status == 'completed' %}
+                Étape terminée
+              {% else %}
+                En attente de traitement
+              {% endif %}
+            </p>
+          </div>
+          <div class="flex-shrink-0">
+            {% if ticket.status == 'in_service' %}
+              <i class="fas fa-spinner fa-spin text-bank-gold"></i>
+            {% elif ticket.status == 'completed' %}
+              <i class="fas fa-check text-bank-green"></i>
+            {% else %}
+              <i class="fas fa-circle text-bank-gray"></i>
+            {% endif %}
+          </div>
+        </div>
+
+        <!-- Step 5: Terminé ou annulé -->
+        <div class="flex items-center">
+          <div class="flex-shrink-0">
+            <div
+              class="w-8 h-8
+                {% if ticket.status == 'completed' %}
+                  bg-bank-green
+                {% elif ticket.status == 'cancelled' %}
+                  bg-red-500
+                {% else %}
+                  bg-gray-300
+                {% endif %}
+              rounded-full flex items-center justify-center"
+            >
+              {% if ticket.status == 'completed' %}
+                <i class="fas fa-check-circle text-white text-sm"></i>
+              {% elif ticket.status == 'cancelled' %}
+                <i class="fas fa-times text-white text-sm"></i>
+              {% else %}
+                <i class="fas fa-circle text-white text-sm"></i>
+              {% endif %}
+            </div>
+          </div>
+          <div class="ml-4 flex-1">
+            <h4 class="text-sm font-medium text-bank-dark-gray">
+              {% if ticket.status == 'completed' %}
+                Terminé
+              {% elif ticket.status == 'cancelled' %}
+                Annulé
+              {% else %}
+                Clôture
+              {% endif %}
+            </h4>
+            <p class="text-sm text-bank-gray">
+              {% if ticket.status == 'completed' %}
+                Votre demande a été traitée avec succès.
+              {% elif ticket.status == 'cancelled' %}
+                Le ticket a été annulé.
+              {% else %}
+                Étape à venir
+              {% endif %}
+            </p>
+          </div>
+          <div class="flex-shrink-0">
+            {% if ticket.status == 'completed' %}
+              <i class="fas fa-check text-bank-green"></i>
+            {% elif ticket.status == 'cancelled' %}
+              <i class="fas fa-times text-red-500"></i>
+            {% else %}
+              <i class="fas fa-circle text-bank-gray"></i>
+            {% endif %}
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
