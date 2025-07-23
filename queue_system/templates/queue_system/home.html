@@ -29,6 +29,7 @@
         <h2 class="text-3xl font-bold text-bank-dark-gray mb-8 text-center">Nos Services</h2>
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {% for service in services %}
+            <a href="{% url 'queue_system:service_detail' service.id %}">
                 <div class="card hover:scale-105 transform transition-transform duration-200">
                     <div class="flex items-center mb-4">
                         <div class="w-4 h-4 rounded-full mr-3" style="background-color: {{ service.color }}"></div>
@@ -58,6 +59,7 @@
                     {% endif %}
                 </div>
             {% endfor %}
+            </a>
         </div>
     </div>
 

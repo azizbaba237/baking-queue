@@ -53,6 +53,7 @@ class Ticket(models.Model):
     called_at = models.DateTimeField(null=True, blank=True)
     service_started_at = models.DateTimeField(null=True, blank=True)
     completed_at = models.DateTimeField(null=True, blank=True)
+    countdown_started_at = models.DateTimeField(null=True, blank=True)
     
     class Meta:
         ordering = ['-priority', 'created_at']
@@ -74,6 +75,18 @@ class Ticket(models.Model):
             created_at__lt=self.created_at
         ).count()
         return waiting_tickets * self.service.estimated_duration
+    
+    def remaining_wait_time(self):
+        if not self.countdown_started_at:
+            return self.estimated_wait_time * 60  # en secondes
+        elapsed = timezone.now() - self.countdown_started_at
+        remaining = self.estimated_wait_time * 60 - int(elapsed.total_seconds())
+        return max(0, remaining)
+
+    def progress_percent(self):
+        total = self.estimated_wait_time * 60
+        remaining = self.remaining_wait_time()
+        return min(100, int(100 * (1 - remaining / total))) if total > 0 else 0
 
 class Queue(models.Model):
     service = models.OneToOneField(Service, on_delete=models.CASCADE)

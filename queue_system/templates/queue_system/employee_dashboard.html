@@ -6,7 +6,7 @@ Tableau de bord employé – Système de File d'Attente
 {% endblock %}
 
 {% block content %}
-<div class="space-y-10">
+<div class="space-y-10 px-4 sm:px-6 lg:px-8">
 
   <!-- En‑tête -->
   <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
@@ -47,38 +47,41 @@ Tableau de bord employé – Système de File d'Attente
   <!-- Ticket en cours de service -->
   {% if current_ticket %}
   <div class="card">
-    <h2 class="text-lg font-semibold text-bank-dark-gray mb-4 flex items-center">
-      <i class="fas fa-user-check mr-2 text-bank-blue"></i>
-      Ticket en cours
-    </h2>
+  <h2 class="text-lg font-semibold text-bank-dark-gray mb-4 flex items-center">
+    <i class="fas fa-user-check mr-2 text-bank-blue"></i>
+    Ticket en cours
+  </h2>
 
-    <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
-      <div class="flex items-center gap-4">
-        <div class="w-16 h-16 rounded-lg bg-bank-blue flex items-center justify-center text-white text-3xl font-bold">
-          {{ current_ticket.ticket_number }}
-        </div>
-        <div>
-          <p class="text-bank-dark-gray font-medium">{{ current_ticket.service.name }}</p>
-          <p class="text-sm text-bank-gray">{{ current_ticket.created_at|date:"d/m/Y H:i" }}</p>
-        </div>
+  <div class="grid grid-cols-1 gap-6 md:grid-cols-2 md:items-center">
+    <!-- Ticket info -->
+    <div class="flex items-start sm:items-center gap-4">
+      <div class="w-32 h-16 px-2 rounded-lg bg-bank-blue flex items-center justify-center text-white text-xl font-bold overflow-hidden text-ellipsis text-center px-1">
+        {{ current_ticket.ticket_number }}
       </div>
-
-      <div class="flex gap-3">
-        <form method="post" action="{% url 'queue_system:complete_ticket' current_ticket.id %}">
-          {% csrf_token %}
-          <button class="btn-primary">
-            <i class="fas fa-check-circle mr-2"></i>Marquer terminé
-          </button>
-        </form>
-        <form method="post" action="{% url 'queue_system:cancel_ticket' current_ticket.id %}">
-          {% csrf_token %}
-          <button class="btn-outline-danger">
-            <i class="fas fa-times-circle mr-2"></i>Annuler
-          </button>
-        </form>
+      <div>
+        <p class="text-bank-dark-gray font-medium">{{ current_ticket.service.name }}</p>
+        <p class="text-sm text-bank-gray">{{ current_ticket.created_at|date:"d/m/Y H:i" }}</p>
       </div>
     </div>
+
+    <!-- Actions -->
+    <div class="flex flex-col sm:flex-row gap-3 w-full">
+      <form method="post" action="{% url 'queue_system:complete_ticket' current_ticket.id %}" class="w-full sm:w-auto">
+        {% csrf_token %}
+        <button class="btn-primary w-full sm:w-auto">
+          <i class="fas fa-check-circle mr-2"></i>Marquer terminé
+        </button>
+      </form>
+      <form method="post" action="{% url 'queue_system:cancel_ticket' current_ticket.id %}" class="w-full sm:w-auto">
+        {% csrf_token %}
+        <button class="btn-outline-danger w-full sm:w-auto">
+          <i class="fas fa-times-circle mr-2"></i>Annuler
+        </button>
+      </form>
+    </div>
   </div>
+</div>
+
   {% endif %}
 
   <!-- Tickets en attente -->

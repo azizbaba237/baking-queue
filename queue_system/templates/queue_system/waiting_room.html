@@ -1,0 +1,97 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Salle d'attente - GESTFILE{% endblock %}
+
+{% block content %}
+<div class="min-h-screen flex items-center justify-center bg-gray-50 px-4 py-12">
+    <div class="w-full max-w-md bg-white rounded-2xl shadow-lg p-8">
+        <h1 class="text-3xl md:text-4xl font-extrabold text-center text-bank-blue mb-4">
+            Salle d'attente virtuelle
+        </h1>
+        <p class="text-center text-gray-600 text-base mb-6">
+            Merci de patienter. Un agent vous appellera bientôt.
+        </p>
+
+        <!-- Barre de progression -->
+        <div class="w-full bg-gray-200 rounded-full h-5 mb-4 shadow-inner">
+            <div id="progress-bar"
+                 class="bg-gradient-to-r from-blue-500 to-blue-700 h-5 rounded-full transition-all duration-700 ease-out"
+                 style="width: 0%;">
+            </div>
+        </div>
+
+        <!-- Infos utilisateur -->
+        <div class="text-sm text-gray-700 space-y-1 text-center mb-6">
+            <p><span class="font-semibold">Position dans la file :</span> #{{ position }}</p>
+            <p>
+                <span class="font-semibold">Temps estimé restant :</span>
+                <span id="countdown" class="font-mono text-bank-blue">--:--</span>
+            </p>
+            <p class="text-green-600">0% du chemin parcouru</p>
+        </div>
+
+        <!-- Bouton annulation -->
+        <form method="post" action="{% url 'queue_system:cancel_ticket' ticket.id %}">
+            {% csrf_token %}
+            <button type="submit"
+                    class="w-full inline-flex items-center justify-center gap-2 px-5 py-3 bg-red-500 hover:bg-red-600 text-white text-sm font-semibold rounded-full shadow-md transition duration-300">
+                <i class="fas fa-times-circle"></i>
+                Annuler le ticket
+            </button>
+        </form>
+    </div>
+</div>
+
+<!-- Notification visuelle -->
+<div id="toast"
+     class="hidden fixed bottom-6 right-6 bg-green-500 text-white px-6 py-3 rounded shadow-lg text-sm z-50 animate-bounce">
+    🎉 C’est bientôt votre tour !
+</div>
+
+<!-- Notification sonore -->
+<audio id="notify-sound">
+    <source src="{% static 'notification/notify.mp3' %}" type="audio/mpeg">
+    Ton navigateur ne supporte pas l'audio.
+</audio>
+
+<!-- Script JS -->
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const countdownElement = document.getElementById("countdown");
+        const toast = document.getElementById("toast");
+        const notifySound = document.getElementById("notify-sound");
+        const progressBar = document.getElementById("progress-bar");
+        const progressText = document.querySelector(".text-green-600");
+
+        const totalSeconds = {{ total_seconds }};
+        let secondsLeft = {{ remaining_seconds }};
+
+        function updateCountdown() {
+            if (secondsLeft <= 0) {
+                countdownElement.innerText = "Moins d’une minute";
+
+                toast.classList.remove("hidden");
+                notifySound.play();
+
+                progressBar.style.width = "100%";
+                progressText.innerText = "100% du chemin parcouru";
+
+                return;
+            }
+
+            const minutes = Math.floor(secondsLeft / 60);
+            const seconds = secondsLeft % 60;
+            countdownElement.innerText = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+
+            const progressPercent = Math.round(((totalSeconds - secondsLeft) / totalSeconds) * 100);
+            progressBar.style.width = progressPercent + "%";
+            progressText.innerText = progressPercent + "% du chemin parcouru";
+
+            secondsLeft--;
+        }
+
+        updateCountdown();
+        setInterval(updateCountdown, 1000);
+    });
+</script>
+{% endblock %}

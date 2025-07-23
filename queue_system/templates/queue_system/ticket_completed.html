@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Ticket #{{ ticket.ticket_number }} - Terminé{% endblock %}
+
+{% block content %}
+<div class="min-h-screen flex flex-col items-center justify-center bg-gray-50 px-4 py-12">
+  <div class="bg-white shadow-lg rounded-xl p-8 max-w-md text-center">
+    <h1 class="text-4xl font-bold text-green-600 mb-4">
+      <i class="fas fa-check-circle"></i> Ticket Terminé
+    </h1>
+    <p class="text-lg mb-6">
+      Votre demande avec le numéro
+      <strong>#{{ ticket.ticket_number }}</strong> a été traitée avec succès.
+    </p>
+    <p class="mb-6">Merci pour votre patience.</p>
+    <a
+      href="{% url 'queue_system:employee_dashboard' %}"
+      class="btn-primary inline-block px-6 py-3 rounded-full text-white bg-blue-600 hover:bg-blue-700 transition"
+    >
+      Retour au tableau de bord
+    </a>
+  </div>
+</div>
+
+<script>
+  // Redirection automatique après 5 secondes (5000 ms)
+  setTimeout(function() {
+    window.location.href = "{% url 'queue_system:employee_dashboard' %}";
+  }, 5000);
+</script>
+{% endblock %}

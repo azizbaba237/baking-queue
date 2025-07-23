@@ -1,0 +1,35 @@
+{% extends 'base.html' %} {% block title %}Service {{ service.name }} -
+GESTFILE{% endblock %} {% block content %}
+<div class="max-w-3xl mx-auto py-12">
+  <h1 class="text-3xl font-bold mb-4 text-bank-blue">{{ service.name }}</h1>
+
+  <div class="mb-6">
+    <p class="text-gray-700">{{ service.description }}</p>
+    <p class="mt-2 text-sm text-gray-600">
+      Durée estimée par client :
+      <strong>{{ service.estimated_duration }} min</strong>
+    </p>
+    <p class="text-sm text-gray-600">
+      File d’attente actuelle : <strong>{{ queue_length }} client(s)</strong>
+    </p>
+    <p class="text-sm text-gray-600">
+      Temps d'attente estimé : <strong>{{ estimated_wait }} min</strong>
+    </p>
+  </div>
+
+  {% if user.is_authenticated %}
+  <a
+    href="{% url 'queue_system:take_ticket' service.id %}"
+    class="btn-primary w-full text-center"
+  >
+    <i class="fas fa-ticket-alt mr-2"></i>
+    Prendre un ticket
+  </a>
+  {% else %}
+  <a href="{% url 'accounts:login' %}" class="btn-secondary w-full text-center">
+    <i class="fas fa-sign-in-alt mr-2"></i>
+    Se connecter pour prendre un ticket
+  </a>
+  {% endif %}
+</div>
+{% endblock %}

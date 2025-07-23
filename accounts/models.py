@@ -11,7 +11,7 @@ class User(AbstractUser):
     ]
     
     role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='client')
-    phone = models.CharField(max_length=15, blank=True, null=True)
+    phone = models.CharField(max_length=25, blank=True, null=True)
     is_vip = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

@@ -10,6 +10,12 @@ urlpatterns = [
     path("", views.home, name="home"),
     path("take-ticket/<int:service_id>/", views.take_ticket, name="take_ticket"),
     path("ticket/<int:ticket_id>/", views.ticket_status, name="ticket_status"),
+    path('ticket/<int:ticket_id>/wait-time/', views.get_estimated_wait_time, name='get_estimated_wait_time'),
+    path('ticket/<int:ticket_id>/cancel/', views.cancel_ticket, name='cancel_ticket'),
+    path('waiting-room/<int:ticket_id>/', views.waiting_room, name='waiting_room'),
+    path("employee/ticket/<int:ticket_id>/complete/", views.complete_ticket, name="complete_ticket"),
+    path("ticket/completed/<int:ticket_id>/", views.ticket_completed, name="ticket_completed"),
+    path('services/<int:service_id>/', views.service_detail, name='service_detail'),
 
     # --- SECTION AUTHENTIFICATION (si tu ne veux pas passer par accounts) ---
     path("login/", RoleBasedLoginView.as_view(template_name="accounts/login.html"), name="login"),
