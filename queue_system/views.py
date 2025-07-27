@@ -41,7 +41,7 @@ def take_ticket(request, service_id):
     estimated_wait = queue_length * service.estimated_duration
 
     if request.method == 'POST':
-        # Vérifier si le client a déjà un ticket en attente
+        # Vérifier si le client a déjà un ticket en cours
         existing_ticket = Ticket.objects.filter(
             client=request.user.client,
             status__in=['waiting', 'called', 'in_service']
@@ -51,22 +51,20 @@ def take_ticket(request, service_id):
             messages.error(request, 'Vous avez déjà un ticket en cours.')
             return redirect('queue_system:ticket_status', ticket_id=existing_ticket.id)
 
-        # Créer un nouveau ticket
+        # Créer un nouveau ticket avec le countdown lancé directement
         ticket = Ticket.objects.create(
             ticket_number=f"{service.name[:2].upper()}{uuid.uuid4().hex[:6].upper()}",
             client=request.user.client,
             service=service,
-            priority=service.base_priority + (10 if request.user.client.client_type == 'vip' else 0)
+            priority=service.base_priority + (10 if request.user.client.client_type == 'vip' else 0),
+            estimated_wait_time=estimated_wait,
+            countdown_started_at=timezone.now(),  # ✅ démarrage immédiat
         )
-
-        # Calculer le temps d'attente
-        ticket.estimated_wait_time = ticket.calculate_wait_time()
-        ticket.save()
 
         messages.success(request, f'Ticket {ticket.ticket_number} créé avec succès!')
         return redirect('queue_system:ticket_status', ticket_id=ticket.id)
 
-    # GET : afficher le formulaire avec les infos du service et file
+    # GET : afficher les infos du service et de la file
     return render(request, 'queue_system/take_ticket.html', {
         'service': service,
         'queue_length': queue_length,
@@ -77,24 +75,37 @@ def take_ticket(request, service_id):
 @login_required
 def ticket_status(request, ticket_id):
     ticket = get_object_or_404(Ticket, id=ticket_id, client=request.user.client)
+
+    if ticket.status in ["cancelled", "completed"]:
+        messages.warning(request, "Ce ticket n’est plus actif.")
+        return redirect("queue_system:take_ticket", service_id=ticket.service.id)
+
+    immediate_service = (ticket.estimated_wait_time == 0)
     
-     # Si pas encore démarré, on démarre le compte à rebours
-    if not ticket.countdown_started_at:
-        ticket.countdown_started_at = timezone.now()
-        ticket.save()
-        
+    if immediate_service or not ticket.countdown_started_at:
+        total_seconds = ticket.estimated_wait_time * 60
+        return render(request, 'queue_system/ticket_status.html', {
+            'ticket': ticket,
+            'remaining_seconds': total_seconds,
+            'progress_percent': 0,
+            'position': ticket.get_position_in_queue(),
+            'immediate_service': immediate_service,
+        })
+
     total_seconds = ticket.estimated_wait_time * 60
     elapsed_seconds = int((timezone.now() - ticket.countdown_started_at).total_seconds())
     remaining_seconds = max(0, total_seconds - elapsed_seconds)
-    
-    progress_percent = min(100, int((elapsed_seconds / total_seconds) * 100)) if total_seconds > 0 else 0
-    
+    progress_percent = min(100, int((elapsed_seconds / total_seconds) * 100))
+
     return render(request, 'queue_system/ticket_status.html', {
         'ticket': ticket,
         'remaining_seconds': remaining_seconds,
         'progress_percent': progress_percent,
         'position': ticket.get_position_in_queue(),
+        'immediate_service': immediate_service,
     })
+
+
     
 # API 
 @api_view(['POST'])
@@ -102,18 +113,19 @@ def call_next_client(request):
     if request.user.role != 'employee':
         return Response({'error': 'Non autorisé'}, status=403)
     
-    # Obtenir le prochain ticket
+    # Obtenir le prochain ticket en attente
     next_ticket = Ticket.objects.filter(status='waiting').first()
     
     if not next_ticket:
         return Response({'message': 'Aucun client en attente'})
     
-    # Mettre à jour le ticket
+    # Démarrer le compte à rebours au moment de l'appel
     next_ticket.status = 'called'
     next_ticket.called_at = timezone.now()
+    next_ticket.countdown_started_at = timezone.now()  # ✅ C’est ici qu’on démarre le timer
     next_ticket.employee = request.user.employee
     next_ticket.save()
-    
+
     # TODO: Envoyer notification au client
     
     return Response({
@@ -232,20 +244,28 @@ def _call_ticket_core(ticket: Ticket, employee):
     ticket.employee = employee
     ticket.save()
 
-
+# POUR COMMENCER LE SERVICE D'UN TICKET
 @login_required
 @require_POST
 def start_service(request, ticket_id):
     if _forbid_non_employee(request):
         return redirect("queue_system:employee_dashboard")
 
-    ticket = get_object_or_404(Ticket, id=ticket_id, status__in=["called", "waiting"])
+    ticket = get_object_or_404(Ticket, id=ticket_id)
+
+    if ticket.status not in ["waiting", "called"]:
+        messages.warning(request, f"Le ticket {ticket.ticket_number} ne peut pas être servi (statut actuel : {ticket.status}).")
+        return redirect("queue_system:employee_dashboard")
+
+    # Assigner l'employé et changer le statut
     ticket.status = "in_service"
     ticket.service_started_at = timezone.now()
     ticket.employee = request.user.employee
     ticket.save()
+
     messages.success(request, f"Service commencé pour le ticket {ticket.ticket_number}.")
     return redirect("queue_system:employee_dashboard")
+
 
 
 # Pour marquer le ticket comme terminé
@@ -255,7 +275,12 @@ def complete_ticket(request, ticket_id):
     if _forbid_non_employee(request):
         return redirect("queue_system:employee_dashboard")
 
-    ticket = get_object_or_404(Ticket, id=ticket_id, status="in_service")
+    ticket = get_object_or_404(Ticket, id=ticket_id)
+
+    if ticket.status != "in_service":
+        messages.warning(request, f"Le ticket {ticket.ticket_number} n'est pas en cours de service.")
+        return redirect("queue_system:employee_dashboard")
+
     ticket.status = "completed"
     ticket.completed_at = timezone.now()
     ticket.save()
@@ -269,40 +294,51 @@ def ticket_completed(request, ticket_id):
     ticket = get_object_or_404(Ticket, id=ticket_id, status="completed")
     return render(request, 'queue_system/ticket_completed.html', {'ticket': ticket})
 
-
+# POUR ANNULER LE TICKET 
 @login_required
 @require_POST
 def cancel_ticket(request, ticket_id):
-    if _forbid_non_employee(request):
-        return redirect("queue_system:employee_dashboard")
+    user = request.user
+    ticket = get_object_or_404(Ticket, id=ticket_id)
 
-    ticket = get_object_or_404(
-        Ticket, id=ticket_id, status__in=["waiting", "called", "in_service"]
-    )
-     # Vérifier que la personne qui annule est soit l'employé assigné, soit le client
-    if request.user.role == 'client':
-        if ticket.client.user != request.user:
+    # Vérifie que le ticket est dans un statut annulable
+    if ticket.status not in ["waiting", "called", "in_service"]:
+        messages.warning(request, f"Le ticket {ticket.ticket_number} ne peut pas être annulé (statut actuel : {ticket.status}).")
+        # Redirection selon rôle (client ou employé)
+        if user.role == 'client':
+            return redirect('queue_system:ticket_status', ticket_id=ticket.id)
+        else:
+            return redirect('queue_system:employee_dashboard')
+
+    # Autorisation selon rôle
+    if user.role == 'client':
+        # Le client ne peut annuler que ses tickets
+        if ticket.client.user != user:
             messages.error(request, "Vous ne pouvez pas annuler ce ticket.")
             return redirect('queue_system:ticket_status', ticket_id=ticket.id)
-    elif request.user.role == 'employee':
-        if ticket.employee != getattr(request.user, 'employee', None):
-            messages.error(request, "Vous ne pouvez pas annuler ce ticket.")
+    elif user.role == 'employee':
+        # L'employé ne peut annuler que les tickets qui lui sont assignés OU pas assignés (à adapter si besoin)
+        employee_profile = getattr(user, 'employee', None)
+        if ticket.employee and ticket.employee != employee_profile:
+            messages.error(request, "Vous n’êtes pas assigné à ce ticket.")
             return redirect('queue_system:employee_dashboard')
     else:
-        messages.error(request, "Accès non autorisé.")
-        return redirect('queue_system:home')
+        # Autres rôles non autorisés
+        return HttpResponseForbidden("Accès non autorisé.")
 
+    # Annulation
     ticket.status = "cancelled"
     ticket.completed_at = timezone.now()
     ticket.save()
-    messages.warning(request, f"Ticket {ticket.ticket_number} annulé.")
 
-    # Rediriger vers la page adaptée
-    if request.user.role == 'client':
-        return redirect('queue_system:ticket_status', ticket_id=ticket.id)
+    messages.success(request, f"Le ticket {ticket.ticket_number} a été annulé.")
+
+    # Redirection selon rôle
+    if user.role == 'client':
+        return redirect('queue_system:home')
     else:
         return redirect('queue_system:employee_dashboard')
-
+    
 
 # Registation view for new users
 def register(request):
@@ -674,12 +710,21 @@ def waiting_room(request, ticket_id):
 
     ticket = get_object_or_404(Ticket, id=ticket_id, client=client)
 
-    position = get_ticket_position(ticket)
+    # 🚫 Redirige immédiatement si le ticket est annulé ou terminé
+    if ticket.status in ["cancelled", "completed"]:
+        messages.warning(request, "Ce ticket n’est plus actif.")
+        return redirect("queue_system:take_ticket", service_id=ticket.service.id)
+
+    # ✅ Calcul précis basé sur countdown_started_at
+    if ticket.countdown_started_at:
+        elapsed = (timezone.now() - ticket.countdown_started_at).total_seconds()
+    else:
+        elapsed = 0
 
     total_seconds = ticket.estimated_wait_time * 60
-    now = timezone.now()
-    elapsed = (now - ticket.created_at).total_seconds()
     remaining_seconds = max(int(total_seconds - elapsed), 0)
+
+    position = get_ticket_position(ticket)
 
     return render(request, 'queue_system/waiting_room.html', {
         'ticket': ticket,

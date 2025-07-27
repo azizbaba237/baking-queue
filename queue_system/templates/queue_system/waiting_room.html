@@ -3,95 +3,142 @@
 {% block title %}Salle d'attente - GESTFILE{% endblock %}
 
 {% block content %}
-<div class="min-h-screen flex items-center justify-center bg-gray-50 px-4 py-12">
-    <div class="w-full max-w-md bg-white rounded-2xl shadow-lg p-8">
-        <h1 class="text-3xl md:text-4xl font-extrabold text-center text-bank-blue mb-4">
-            Salle d'attente virtuelle
-        </h1>
-        <p class="text-center text-gray-600 text-base mb-6">
-            Merci de patienter. Un agent vous appellera bientôt.
-        </p>
+<div class="min-h-screen flex items-center justify-center bg-gradient-to-tr from-blue-50 via-white to-gray-100 px-6 py-16">
+  <div class="w-full max-w-lg bg-white rounded-3xl shadow-2xl p-10 border border-gray-200">
+    
+    <h1 class="text-4xl font-extrabold text-center text-bank-blue mb-6 tracking-tight drop-shadow-sm">
+      Salle d'attente virtuelle
+    </h1>
 
-        <!-- Barre de progression -->
-        <div class="w-full bg-gray-200 rounded-full h-5 mb-4 shadow-inner">
-            <div id="progress-bar"
-                 class="bg-gradient-to-r from-blue-500 to-blue-700 h-5 rounded-full transition-all duration-700 ease-out"
-                 style="width: 0%;">
-            </div>
-        </div>
+    <p class="text-center text-gray-700 text-lg mb-8 max-w-md mx-auto">
+      Merci de patienter. Un agent vous appellera très bientôt pour vous assister.
+    </p>
 
-        <!-- Infos utilisateur -->
-        <div class="text-sm text-gray-700 space-y-1 text-center mb-6">
-            <p><span class="font-semibold">Position dans la file :</span> #{{ position }}</p>
-            <p>
-                <span class="font-semibold">Temps estimé restant :</span>
-                <span id="countdown" class="font-mono text-bank-blue">--:--</span>
-            </p>
-            <p class="text-green-600">0% du chemin parcouru</p>
-        </div>
-
-        <!-- Bouton annulation -->
-        <form method="post" action="{% url 'queue_system:cancel_ticket' ticket.id %}">
-            {% csrf_token %}
-            <button type="submit"
-                    class="w-full inline-flex items-center justify-center gap-2 px-5 py-3 bg-red-500 hover:bg-red-600 text-white text-sm font-semibold rounded-full shadow-md transition duration-300">
-                <i class="fas fa-times-circle"></i>
-                Annuler le ticket
-            </button>
-        </form>
+    <!-- Barre de progression -->
+    <div class="w-full bg-gray-200 rounded-full h-6 mb-6 shadow-inner overflow-hidden">
+      <div id="progress-bar"
+           class="h-6 rounded-full bg-gradient-to-r from-bank-blue to-bank-light-blue transition-all duration-700 ease-out"
+           style="width: 0%;">
+      </div>
     </div>
+
+    <!-- Infos utilisateur -->
+    <div class="text-center text-gray-800 space-y-3 mb-8 select-none">
+      <p class="text-xl font-semibold">
+        <i class="fas fa-user-clock mr-2 text-bank-blue"></i>
+        Position dans la file : <span class="text-bank-blue">#{{ position }}</span>
+      </p>
+      <p class="text-xl font-semibold">
+        <i class="fas fa-hourglass-half mr-2 text-bank-blue"></i>
+        Temps estimé restant : <span id="countdown" class="font-mono text-bank-blue">--:--</span>
+      </p>
+      <p class="text-green-600 font-semibold" id="progress-text">0% du chemin parcouru</p>
+    </div>
+
+        <!-- Bouton voir le ticket -->
+    <div class="max-w-xs mx-auto mb-4">
+      <a href="{% url 'queue_system:ticket_status' ticket.id %}"
+         class="w-full block text-center px-6 py-3 bg-bank-blue hover:bg-bank-dark-blue text-white font-semibold rounded-full shadow-lg transition duration-300">
+        <i class="fas fa-ticket-alt mr-2"></i>
+        Voir le ticket
+      </a>
+    </div>
+
+    <!-- Bouton annulation -->
+    <form method="post" action="{% url 'queue_system:cancel_ticket' ticket.id %}" class="max-w-xs mx-auto">
+      {% csrf_token %}
+      <button type="submit"
+              class="w-full flex items-center justify-center gap-3 px-6 py-3 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-full shadow-lg transition duration-300 focus:outline-none focus:ring-4 focus:ring-red-400">
+        <i class="fas fa-times-circle text-lg"></i>
+        Annuler le ticket
+      </button>
+    </form>
+
+
+  </div>
 </div>
 
 <!-- Notification visuelle -->
 <div id="toast"
-     class="hidden fixed bottom-6 right-6 bg-green-500 text-white px-6 py-3 rounded shadow-lg text-sm z-50 animate-bounce">
-    🎉 C’est bientôt votre tour !
+     class="hidden fixed bottom-6 right-6 bg-green-600 text-white px-6 py-3 rounded-lg shadow-lg text-sm z-50 animate-pulse select-none">
+  🎉 C’est bientôt votre tour !
 </div>
 
 <!-- Notification sonore -->
-<audio id="notify-sound">
-    <source src="{% static 'notification/notify.mp3' %}" type="audio/mpeg">
-    Ton navigateur ne supporte pas l'audio.
+<audio id="notify-sound" preload="auto">
+  <source src="{% static 'notification/notify.mp3' %}" type="audio/mpeg">
+  Ton navigateur ne supporte pas l'audio.
 </audio>
 
 <!-- Script JS -->
 <script>
-    document.addEventListener("DOMContentLoaded", function () {
-        const countdownElement = document.getElementById("countdown");
-        const toast = document.getElementById("toast");
-        const notifySound = document.getElementById("notify-sound");
-        const progressBar = document.getElementById("progress-bar");
-        const progressText = document.querySelector(".text-green-600");
+  document.addEventListener("DOMContentLoaded", function () {
+    let seconds = {{ remaining_seconds }};
+    const countdown = document.getElementById("countdown");
+    const progressBar = document.getElementById("progress-bar");
+    const progressText = document.querySelector(".text-green-600");
+    const toast = document.getElementById("toast");
+    const notifySound = document.getElementById("notify-sound");
 
-        const totalSeconds = {{ total_seconds }};
-        let secondsLeft = {{ remaining_seconds }};
+    // Variables pour la répétition du son
+    const maxPlays = 3;
+    let playCount = 0;
 
-        function updateCountdown() {
-            if (secondsLeft <= 0) {
-                countdownElement.innerText = "Moins d’une minute";
+    // Fonction pour jouer le son + afficher le toast
+    function playNotification() {
+      notifySound.play().catch(() => {});
+      toast.classList.remove("hidden");
 
-                toast.classList.remove("hidden");
-                notifySound.play();
+      setTimeout(() => {
+        toast.classList.add("hidden");
+      }, 5000); // toast visible 5 secondes
 
-                progressBar.style.width = "100%";
-                progressText.innerText = "100% du chemin parcouru";
+      playCount++;
+      if (playCount < maxPlays) {
+        // Relancer dans 30 secondes
+        setTimeout(playNotification, 10000);
+      }
+    }
 
-                return;
-            }
+    // Cas service immédiat (temps estimé nul)
+    if (seconds === 0) {
+      countdown.innerText = "Servi immédiatement !";
+      progressBar.style.width = "100%";
+      progressText.innerText = "100% du chemin parcouru";
 
-            const minutes = Math.floor(secondsLeft / 60);
-            const seconds = secondsLeft % 60;
-            countdownElement.innerText = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+      playNotification();
+      return;
+    }
 
-            const progressPercent = Math.round(((totalSeconds - secondsLeft) / totalSeconds) * 100);
-            progressBar.style.width = progressPercent + "%";
-            progressText.innerText = progressPercent + "% du chemin parcouru";
+    function updateCountdown() {
+      if (seconds <= 0) {
+        countdown.innerText = "Moins d’une minute";
+        progressBar.style.width = "100%";
+        progressText.innerText = "100% du chemin parcouru";
 
-            secondsLeft--;
+        if (playCount === 0) {
+          playNotification();
         }
 
-        updateCountdown();
-        setInterval(updateCountdown, 1000);
-    });
+        return;
+      }
+
+      const mins = Math.floor(seconds / 60);
+      const secs = seconds % 60;
+      countdown.innerText = `${mins}:${secs.toString().padStart(2, '0')}`;
+
+      const total = {{ ticket.estimated_wait_time }} * 60;
+      const percent = Math.min(100, Math.round(100 * (1 - (seconds / total))));
+      progressBar.style.width = percent + "%";
+      progressText.innerText = percent + "% du chemin parcouru";
+
+      seconds--;
+    }
+
+    updateCountdown();
+    setInterval(updateCountdown, 1000);
+  });
 </script>
+
+
 {% endblock %}

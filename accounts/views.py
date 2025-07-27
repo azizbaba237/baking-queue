@@ -25,24 +25,32 @@ class RoleBasedLoginView(LoginView):
 def register(request):
     if request.method == "POST":
         form = CustomUserCreationForm(request.POST)
-        client_type = request.POST.get('client_type')  # récupère la sélection du type de client
+        client_type = request.POST.get("client_type")
 
-        if form.is_valid() and client_type in dict(Client.CLIENT_TYPES).keys():
-            user = form.save()
-            
-            # Crée le profil client associé
-            Client.objects.create(user=user, client_type=client_type)
-            
-            # Connexion automatique
+        valid_types = dict(Client.CLIENT_TYPES).keys()
+        if not client_type or client_type not in valid_types:
+            form.add_error("client_type", "Veuillez sélectionner un type de client valide.")
+
+        if form.is_valid():
+            user = form.save(commit=False)
+            user.role = 'client'
+            user.save()
+
+            # Création du profil client ici uniquement
+            if not Client.objects.filter(user=user).exists():
+                Client.objects.create(user=user, client_type=client_type)
+
             login(request, user)
             return redirect("queue_system:home")
-        else:
-            print(form.errors)
     else:
         form = CustomUserCreationForm()
 
-    return render(request, 'registration/register.html', {
-        'form': form,
-        'client_types': Client.CLIENT_TYPES,  # on passe les types de client au template
+    return render(request, "registration/register.html", {
+        "form": form,
+        "client_types": Client.CLIENT_TYPES,
     })
+
+
+
+
 

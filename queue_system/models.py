@@ -76,6 +76,11 @@ class Ticket(models.Model):
         ).count()
         return waiting_tickets * self.service.estimated_duration
     
+    def start_countdown(self):
+        if not self.countdown_started_at:
+            self.countdown_started_at = timezone.now()
+            self.save(update_fields=['countdown_started_at'])
+    
     def remaining_wait_time(self):
         if not self.countdown_started_at:
             return self.estimated_wait_time * 60  # en secondes

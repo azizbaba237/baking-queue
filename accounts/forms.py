@@ -15,11 +15,12 @@ class CustomUserCreationForm(UserCreationForm):
     last_name = forms.CharField(required=True, max_length=150)
     email = forms.EmailField(required=True)
     phone = forms.CharField(required=True, max_length=20)
-    role = forms.ChoiceField(choices=[('client', 'Client'), ('employee', 'Employé')], required=True)
-
+    
+    client_type = forms.ChoiceField(choices=Client.CLIENT_TYPES, required=False)
+    
     class Meta:
         model = User
-        fields = ("username", "first_name", "last_name", "email", "phone", "role", "password1", "password2")
+        fields = ("username", "first_name", "last_name", "email", "phone", "password1", "password2")
 
     # Override save pour enregistrer aussi les champs personnalisés
     def save(self, commit=True):
@@ -28,18 +29,7 @@ class CustomUserCreationForm(UserCreationForm):
         user.last_name = self.cleaned_data["last_name"]
         user.email = self.cleaned_data["email"]
         user.phone = self.cleaned_data["phone"]
-        user.role = self.cleaned_data["role"]
         if commit:
             user.save()
-            
-         # Crée un Client ou Employee selon le rôle
-        if user.role == "client":
-            Client.objects.create(user=user, client_type="regular")  # Tu peux adapter le type
-        elif user.role == "employee":
-            employee_id = generate_employee_id()
-            Employee.objects.create(
-                user=user,
-                employee_id=employee_id,
-                hire_date=timezone.now().date()  # Assure-toi d'importer timezone
-            )
+
         return user
