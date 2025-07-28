@@ -2,77 +2,107 @@
 {% block title %}Dashboard Admin{% endblock %}
 
 {% block content %}
-<div class="max-w-7xl mx-auto p-6 space-y-8">
-    <h1 class="text-3xl font-bold text-bank-dark-gray">Tableau de bord Administrateur</h1>
+<div class="max-w-7xl mx-auto p-6 space-y-10">
+    <h1 class="text-3xl font-bold text-bank-dark-gray dark:text-white">Tableau de bord Administrateur</h1>
 
-    <!-- Statistiques -->
-    <div class="grid grid-cols-2 md:grid-cols-3 gap-6">
+    <!-- Bouton Ajouter un Employé -->
+    <div class="flex justify-end mb-4">
+        <a href="{% url 'queue_system:create_employee' %}" 
+        class="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg shadow">
+            ➕ Ajouter un Employé
+        </a>
+    </div>
+
+    <!-- Statistiques générales -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
         <div class="bg-white shadow-md rounded-lg p-4 text-center">
-            <div class="text-lg font-semibold text-bank-dark-gray">Utilisateurs</div>
-            <div class="text-3xl font-bold text-bank-blue">{{ stats.total_users }}</div>
+            <div class="text-sm font-semibold text-gray-500">Utilisateurs</div>
+            <div class="text-3xl font-bold text-blue-600">{{ stats.total_users }}</div>
         </div>
         <div class="bg-white shadow-md rounded-lg p-4 text-center">
-            <div class="text-lg font-semibold text-bank-dark-gray">Clients</div>
-            <div class="text-3xl font-bold text-bank-blue">{{ stats.total_clients }}</div>
+            <div class="text-sm font-semibold text-gray-500">Clients</div>
+            <div class="text-3xl font-bold text-blue-600">{{ stats.total_clients }}</div>
         </div>
         <div class="bg-white shadow-md rounded-lg p-4 text-center">
-            <div class="text-lg font-semibold text-bank-dark-gray">Employés</div>
-            <div class="text-3xl font-bold text-bank-blue">{{ stats.total_employees }}</div>
+            <div class="text-sm font-semibold text-gray-500">Employés</div>
+            <div class="text-3xl font-bold text-blue-600">{{ stats.total_employees }}</div>
         </div>
         <div class="bg-white shadow-md rounded-lg p-4 text-center">
-            <div class="text-lg font-semibold text-bank-dark-gray">Tickets émis</div>
-            <div class="text-3xl font-bold text-bank-blue">{{ stats.total_tickets }}</div>
+            <div class="text-sm font-semibold text-gray-500">Services actifs</div>
+            <div class="text-3xl font-bold text-yellow-500">{{ stats.active_services }}</div>
         </div>
         <div class="bg-white shadow-md rounded-lg p-4 text-center">
-            <div class="text-lg font-semibold text-bank-dark-gray">Tickets terminés</div>
-            <div class="text-3xl font-bold text-bank-green">{{ stats.completed_tickets }}</div>
+            <div class="text-sm font-semibold text-gray-500">Tickets émis</div>
+            <div class="text-3xl font-bold text-blue-600">{{ stats.total_tickets }}</div>
         </div>
         <div class="bg-white shadow-md rounded-lg p-4 text-center">
-            <div class="text-lg font-semibold text-bank-dark-gray">Services actifs</div>
-            <div class="text-3xl font-bold text-bank-gold">{{ stats.active_services }}</div>
+            <div class="text-sm font-semibold text-gray-500">Tickets terminés</div>
+            <div class="text-3xl font-bold text-green-600">{{ stats.completed_tickets }}</div>
+        </div>
+        <div class="bg-white shadow-md rounded-lg p-4 text-center">
+            <div class="text-sm font-semibold text-gray-500">Tickets en attente</div>
+            <div class="text-3xl font-bold text-orange-500">{{ stats.waiting_tickets }}</div>
+        </div>
+        <div class="bg-white shadow-md rounded-lg p-4 text-center">
+            <div class="text-sm font-semibold text-gray-500">Tickets annulés</div>
+            <div class="text-3xl font-bold text-red-500">{{ stats.cancelled_tickets }}</div>
         </div>
     </div>
 
-    <!-- Derniers utilisateurs -->
+    <!-- Liens de gestion -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <a href="/admin/queue_system/service/" class="bg-white shadow p-4 rounded hover:bg-gray-50 block">
+            <h3 class="font-bold text-bank-dark-gray">Gérer les Services</h3>
+            <p class="text-sm text-gray-500">Ajouter, modifier, activer ou désactiver</p>
+        </a>
+        <a href="/admin/queue_system/counter/" class="bg-white shadow p-4 rounded hover:bg-gray-50 block">
+            <h3 class="font-bold text-bank-dark-gray">Gérer les Comptoirs</h3>
+            <p class="text-sm text-gray-500">Contrôler statut et capacité</p>
+        </a>
+        <a href="/admin/accounts/user/" class="bg-white shadow p-4 rounded hover:bg-gray-50 block">
+            <h3 class="font-bold text-bank-dark-gray">Gérer les Utilisateurs</h3>
+            <p class="text-sm text-gray-500">Voir tous les comptes</p>
+        </a>
+    </div>
+
+    <!-- Comptoirs -->
     <div class="bg-white p-6 rounded-lg shadow-md">
-        <h2 class="text-xl font-bold mb-4 text-bank-dark-gray">Derniers utilisateurs</h2>
+        <h2 class="text-xl font-bold mb-4 text-bank-dark-gray">Comptoirs</h2>
         <ul class="divide-y divide-gray-200">
-            {% for user in users %}
-            <li class="py-2 flex justify-between items-center">
-                <span>{{ user.first_name }} {{ user.last_name }} ({{ user.role }})</span>
-                <a href="{% url 'queue_system:admin_user_profile' user.id %}" class="text-bank-blue hover:underline">Voir profil</a>
+            {% for counter in counters %}
+            <li class="py-2 flex justify-between">
+                <span>
+                    <strong>{{ counter.name }}</strong> – {{ counter.location }} – 
+                    <span class="{% if counter.status == 'open' %}text-green-600{% elif counter.status == 'closed' %}text-red-500{% else %}text-yellow-500{% endif %}">
+                        {{ counter.get_status_display }}
+                    </span>
+                </span>
+                <div class="flex flex-wrap gap-2">
+                    <a href="{% url 'queue_system:change_counter_status' counter.id 'open' %}" class="text-xs px-2 py-1 bg-green-100 text-green-700 rounded hover:bg-green-200">Ouvrir</a>
+                    <a href="{% url 'queue_system:change_counter_status' counter.id 'closed' %}" class="text-xs px-2 py-1 bg-red-100 text-red-700 rounded hover:bg-red-200">Fermer</a>
+                    <a href="{% url 'queue_system:change_counter_status' counter.id 'maintenance' %}" class="text-xs px-2 py-1 bg-yellow-100 text-yellow-700 rounded hover:bg-yellow-200">Maintenance</a>
+                </div>
             </li>
             {% empty %}
-            <li>Aucun utilisateur</li>
+            <li>Aucun comptoir trouvé.</li>
             {% endfor %}
         </ul>
     </div>
 
-    <!-- Derniers tickets -->
+    <!-- Évaluations -->
     <div class="bg-white p-6 rounded-lg shadow-md">
-        <h2 class="text-xl font-bold mb-4 text-bank-dark-gray">Derniers tickets</h2>
-        <table class="min-w-full divide-y divide-gray-200 text-sm">
-            <thead>
-                <tr>
-                    <th class="text-left py-2">Ticket</th>
-                    <th class="text-left py-2">Service</th>
-                    <th class="text-left py-2">Statut</th>
-                    <th class="text-left py-2">Créé le</th>
-                </tr>
-            </thead>
-            <tbody class="divide-y divide-gray-100">
-                {% for ticket in tickets %}
-                <tr>
-                    <td class="py-2 font-semibold">{{ ticket.ticket_number }}</td>
-                    <td class="py-2">{{ ticket.service.name }}</td>
-                    <td class="py-2">{{ ticket.get_status_display }}</td>
-                    <td class="py-2">{{ ticket.created_at|date:"d/m/Y H:i" }}</td>
-                </tr>
-                {% empty %}
-                <tr><td colspan="4" class="text-center py-2">Aucun ticket trouvé</td></tr>
-                {% endfor %}
-            </tbody>
-        </table>
+        <h2 class="text-xl font-bold mb-4 text-bank-dark-gray">Dernières évaluations</h2>
+        <ul class="divide-y divide-gray-200">
+            {% for eval in evaluations %}
+            <li class="py-2">
+                ⭐ {{ eval.rating }}/5 – <em>{{ eval.comment|default:"Aucun commentaire" }}</em><br>
+                <small class="text-gray-500">Ticket {{ eval.ticket.ticket_number }} – {{ eval.created_at|date:"d/m/Y H:i" }}</small>
+            </li>
+            {% empty %}
+            <li>Aucune évaluation.</li>
+            {% endfor %}
+        </ul>
     </div>
+
 </div>
 {% endblock %}

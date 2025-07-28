@@ -6,7 +6,7 @@ from django.utils import timezone
 from django.db.models import  Avg, F, ExpressionWrapper, DurationField
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
-from .models import Service, Ticket
+from .models import *
 import uuid
 from django.views.decorators.http import require_POST, require_http_methods
 from django.http import HttpResponseForbidden
@@ -18,13 +18,17 @@ from django.contrib.auth.password_validation import validate_password
 from django.core.paginator import Paginator
 from .utils import get_ticket_position, get_progress_percent
 from accounts.models import Client
+from queue_system.models import Ticket, Service, Counter, Evaluation
+from django.contrib.auth import get_user_model
 from datetime import datetime, time, timedelta
 from django.utils.timezone import make_aware, localdate
+from accounts.forms import EmployeeCreationForm
 import json
 import re
 
 
 # ----------------------------------------------------------------- 
+User = get_user_model()
 
 def home(request):
     current_ticket = None
@@ -654,12 +658,11 @@ def role_required(roles):
 @login_required
 @role_required(['admin'])
 def admin_dashboard(request):
-    from django.contrib.auth import get_user_model
-    User = get_user_model()
-
-    users = User.objects.all().select_related()
-    tickets = Ticket.objects.all()
+    users = User.objects.all()
+    tickets = Ticket.objects.select_related('service')
     services = Service.objects.all()
+    counters = Counter.objects.all()
+    evaluations = Evaluation.objects.select_related('ticket')
 
     stats = {
         'total_users': users.count(),
@@ -667,15 +670,49 @@ def admin_dashboard(request):
         'total_employees': users.filter(role='employee').count(),
         'total_tickets': tickets.count(),
         'completed_tickets': tickets.filter(status='completed').count(),
+        'cancelled_tickets': tickets.filter(status='cancelled').count(),
+        'waiting_tickets': tickets.filter(status='waiting').count(),
         'active_services': services.filter(is_active=True).count(),
+        'active_counters': counters.filter(status='open').count(),
+        'evaluations': evaluations.count(),
     }
 
     return render(request, 'queue_system/admin_dashboard.html', {
         'stats': stats,
-        'users': users[:10],  # exemple: afficher les 10 derniers
+        'users': users.order_by('-date_joined')[:10],
         'tickets': tickets.order_by('-created_at')[:10],
         'services': services,
+        'counters': counters,
+        'evaluations': evaluations.order_by('-created_at')[:5],
     })
+    
+# Vue pour créer un nouvel employé
+def create_employee(request):
+    if request.method == "POST":
+        form = EmployeeCreationForm(request.POST)
+        if form.is_valid():
+            user = form.save(commit=False)
+            user.role = 'employee'
+            user.save()
+            Employee.objects.create(user=user)
+            return redirect('queue_system:admin_dashboard')  # redirige après création
+    else:
+        form = EmployeeCreationForm()
+
+    return render(request, "queue_system/create_employee.html", {"form": form})
+
+# vue pour changer le statut du comptoir
+@login_required
+@role_required(['admin'])
+def change_counter_status(request, counter_id, status):
+    counter = get_object_or_404(Counter, id=counter_id)
+    if status in ['open', 'closed', 'maintenance']:
+        counter.status = status
+        counter.save()
+        messages.success(request, f"Le comptoir {counter.name} est maintenant {counter.get_status_display()}.")
+    else:
+        messages.error(request, "Statut invalide.")
+    return redirect('queue_system:admin_dashboard')
 
 
 # -----------------------------------------------------------------

@@ -40,11 +40,14 @@ urlpatterns = [
     path("employee/ticket/<int:ticket_id>/repeat-sound/", views.repeat_sound, name="repeat_sound"),
     path("employee/ticket/<int:ticket_id>/return/", views.return_to_queue, name="return_to_queue"),
     path("employee/client/<int:client_id>/", views.client_profile, name="client_profile"),
+    path('dashboard/admin/create-employee/', views.create_employee, name='create_employee'),
 
 
     # --- SECTION ADMIN ---
     path('dashboard/admin/', views.admin_dashboard, name='admin_dashboard'),
     path("admin/user/<int:user_id>/", views.admin_user_profile, name="admin_user_profile"),
+    path('admin-dashboard/change-counter-status/<int:counter_id>/<str:status>/', views.change_counter_status, name='change_counter_status'),
+
 
     # --- SECTION API ---
     path("api/call-next/", views.call_next_client, name="call_next_client"),

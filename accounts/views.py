@@ -1,15 +1,16 @@
 from django.shortcuts import render, redirect
-from .forms import CustomUserCreationForm
+from .forms import CustomUserCreationForm  # <-- le bon formulaire
 from django.contrib.auth import login
 from django.contrib.auth.views import LoginView
 from django.urls import reverse_lazy
 from accounts.models import Client
 
+
 class RoleBasedLoginView(LoginView):
     """
     Redirige l'utilisateur vers une page différente selon son rôle après login.
     """
-    template_name = "registration/login.html" # Chemin vers le template de login
+    template_name = "registration/login.html"
 
     def get_success_url(self):
         user = self.request.user
@@ -18,28 +19,15 @@ class RoleBasedLoginView(LoginView):
             return reverse_lazy("queue_system:admin_dashboard")
         elif user.role == "employee":
             return reverse_lazy("queue_system:employee_dashboard")
-        else:  # client ou rôle inconnu
+        else:
             return reverse_lazy("queue_system:home")
 
 
 def register(request):
     if request.method == "POST":
-        form = CustomUserCreationForm(request.POST)
-        client_type = request.POST.get("client_type")
-
-        valid_types = dict(Client.CLIENT_TYPES).keys()
-        if not client_type or client_type not in valid_types:
-            form.add_error("client_type", "Veuillez sélectionner un type de client valide.")
-
+        form = CustomUserCreationForm(request.POST)  # <- Utilisation correcte
         if form.is_valid():
-            user = form.save(commit=False)
-            user.role = 'client'
-            user.save()
-
-            # Création du profil client ici uniquement
-            if not Client.objects.filter(user=user).exists():
-                Client.objects.create(user=user, client_type=client_type)
-
+            user = form.save()  # le formulaire crée le Client automatiquement
             login(request, user)
             return redirect("queue_system:home")
     else:
@@ -49,8 +37,3 @@ def register(request):
         "form": form,
         "client_types": Client.CLIENT_TYPES,
     })
-
-
-
-
-

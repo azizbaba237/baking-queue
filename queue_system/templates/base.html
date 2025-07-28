@@ -4,7 +4,20 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Système de File d'Attente Bancaire{% endblock %}</title>
-    
+    <!-- Dark Mode Support  -->
+    <script>
+        (function() {
+            try {
+            const stored = localStorage.getItem('theme');
+            if (stored === 'dark' || (!stored && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+            }
+            } catch(e) {}
+        })();
+    </script>
+
     <!-- TailwindCSS -->
     {% load static %}
     <link href="{% static 'css/output.css' %}" rel="stylesheet">
@@ -20,9 +33,16 @@
     
     {% block extra_css %}{% endblock %}
 </head>
-<body class="bg-bank-light-gray min-h-screen font-bank">
+
+<style>
+  html {
+    transition: background-color 0.3s, color 0.3s;
+  }
+</style>
+
+<body class="bg-bank-light-gray min-h-screen dark:bg-bank-darker-gray text-white font-bank">
     <!-- Navigation -->
-    <nav class="bg-bank-blue shadow-lg">
+    <nav class="bg-bank-blue shadow-lg dark:bg-bank-dark-blue  text-white">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between items-center h-16">
                 <!-- Logo -->
@@ -125,6 +145,15 @@
         </div>
     </nav>
 
+    <button id="darkModeToggle" aria-label="Basculer mode sombre" 
+    class="flex items-center gap-2 px-4 py-2 rounded bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600 transition shadow">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+            d="M12 3v1m0 16v1m8.485-9H21m-16 0H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m12.728 0l-.707-.707M6.343 6.343l-.707-.707M12 5a7 7 0 100 14 7 7 0 000-14z" />
+        </svg>
+        Mode Sombre
+    </button>
+
     <!-- Messages -->
     {% if messages %}
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-4">
@@ -143,7 +172,7 @@
     </main>
 
     <!-- Footer -->
-    <footer class="bg-bank-dark-gray text-white mt-16">
+    <footer class="bg-bank-dark-gray dark:bg-bank-darker-gray text-white mt-16">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
             <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
                 <div>
@@ -203,5 +232,22 @@
     </script>
     
     {% block extra_js %}{% endblock %}
+
+    <!-- Dark Mode Toggle Script -->
+    <script>
+        const btn = document.getElementById('darkModeToggle');
+
+        if (btn) {
+            btn.addEventListener('click', () => {
+            const isDark = document.documentElement.classList.toggle('dark');
+            try {
+                localStorage.setItem('theme', isDark ? 'dark' : 'light');
+                      console.log(isDark);
+            } catch (e) {}
+            });
+            
+        }
+        
+    </script>
 </body>
 </html>

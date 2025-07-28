@@ -1,5 +1,6 @@
 /** @type {import('tailwindcss').Config} */
 module.exports = {
+  darkMode: 'class', 
   content: [
     "./templates/**/*.html",
     "./*/templates/**/*.html",
@@ -9,16 +10,19 @@ module.exports = {
     extend: {
       colors: {
         'bank': {
-          'blue': '#1E40AF',
+          blue: '#1E40AF',
+          'dark-blue': '#1e3a8a',        // plus foncé pour le mode sombre
           'light-blue': '#3B82F6',
-          'gold': '#F59E0B',
+          gold: '#F59E0B',
+          'dark-gold': '#b38f00',
           'light-gold': '#FCD34D',
-          'gray': '#6B7280',
+          gray: '#6B7280',
           'light-gray': '#F3F4F6',
           'dark-gray': '#374151',
-          'green': '#10B981',
-          'red': '#EF4444',
-          'orange': '#F97316',
+          'darker-gray': '#1F2937',
+          green: '#10B981',
+          red: '#EF4444',
+          orange: '#F97316',
         }
       },
       fontFamily: {
