@@ -23,6 +23,15 @@
             </div>
         </div>
     </div>
+        <!-- Boution pour voir le ticket en cours -->
+        {% if user.is_authenticated and user.role == 'client' and current_ticket %}
+    <div class="flex justify-center">
+        <a href="{% url 'queue_system:ticket_status' current_ticket.id %}" class="inline-flex items-center bg-bank-gold text-white font-semibold px-6 py-3 rounded-lg shadow-md hover:bg-yellow-600 transition-colors">
+            <i class="fas fa-ticket-alt mr-2"></i>
+            Voir mon ticket en cours
+        </a>
+    </div>
+        {% endif %}
 
     <!-- Services Section -->
     <div>

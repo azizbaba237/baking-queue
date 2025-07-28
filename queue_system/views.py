@@ -17,6 +17,9 @@ from django.core.exceptions import ValidationError
 from django.contrib.auth.password_validation import validate_password
 from django.core.paginator import Paginator
 from .utils import get_ticket_position, get_progress_percent
+from accounts.models import Client
+from datetime import datetime, time, timedelta
+from django.utils.timezone import make_aware, localdate
 import json
 import re
 
@@ -24,8 +27,23 @@ import re
 # ----------------------------------------------------------------- 
 
 def home(request):
+    current_ticket = None
+
+    if request.user.is_authenticated and getattr(request.user, 'role', None) == 'client':
+        try:
+            current_ticket = Ticket.objects.filter(
+                client=request.user.client,
+                status__in=["waiting", "called"]
+            ).latest("created_at")
+        except Ticket.DoesNotExist:
+            current_ticket = None
+
     services = Service.objects.filter(is_active=True)
-    return render(request, 'queue_system/home.html', {'services': services})
+
+    return render(request, 'queue_system/home.html', {
+        "services": services,
+        "current_ticket": current_ticket
+    })
 
 # -----------------------------------------------------------------
 #  GESTION DES TICKETS
@@ -155,6 +173,12 @@ def employee_dashboard(request):
     if _forbid_non_employee(request):
         return redirect("queue_system:home")
 
+    today = timezone.localdate()
+    start = timezone.make_aware(datetime.combine(today, time.min))
+    end = start + timedelta(days=1)
+
+    today_qs = Ticket.objects.filter(created_at__gte=start, created_at__lt=end)
+
     waiting_tickets = (
         Ticket.objects.filter(status="waiting")
         .select_related("service", "client")
@@ -165,14 +189,10 @@ def employee_dashboard(request):
         Ticket.objects.filter(
             employee=request.user.employee, status__in=["called", "in_service"]
         )
-        .order_by("status")      # 'called' d’abord
+        .order_by("status")
         .first()
     )
 
-    today = timezone.localdate()
-    today_qs = Ticket.objects.filter(created_at__date=today)
-
-    # ── Durée moyenne = (completed_at − created_at) ──
     avg_delta = (
         today_qs.filter(status="completed")
         .annotate(
@@ -748,3 +768,49 @@ def service_detail(request, service_id):
         'queue_length': queue_length,
         'estimated_wait': estimated_wait,
     })
+    
+    
+# Répéter la sonnerie pour un ticket
+@login_required
+@require_POST
+def repeat_sound(request, ticket_id):
+    if _forbid_non_employee(request):
+        return redirect("queue_system:employee_dashboard")
+
+    ticket = get_object_or_404(Ticket, id=ticket_id)
+
+    # Ici tu pourrais déclencher une logique JavaScript côté client pour émettre le son
+    # Ou enregistrer un événement à lire côté écran d’affichage
+    messages.success(request, f"Sonnerie répétée pour le ticket {ticket.ticket_number}.")
+    return redirect("queue_system:employee_dashboard")
+
+#Retourner un ticket à la file d'attente
+@login_required
+@require_POST
+def return_to_queue(request, ticket_id):
+    if _forbid_non_employee(request):
+        return redirect("queue_system:employee_dashboard")
+
+    ticket = get_object_or_404(Ticket, id=ticket_id)
+
+    if ticket.status not in ["called", "in_service"]:
+        messages.warning(request, f"Le ticket {ticket.ticket_number} ne peut pas être remis en file (statut : {ticket.status}).")
+        return redirect("queue_system:employee_dashboard")
+
+    ticket.status = "waiting"
+    ticket.employee = None
+    ticket.called_at = None
+    ticket.service_started_at = None
+    ticket.save()
+
+    messages.success(request, f"Ticket {ticket.ticket_number} replacé dans la file.")
+    return redirect("queue_system:employee_dashboard")
+
+# Pour voir le profile client 
+@login_required
+def client_profile(request, client_id):
+    if _forbid_non_employee(request):
+        return redirect("queue_system:home")
+
+    client = get_object_or_404(Client, id=client_id)
+    return render(request, "queue_system/client_profile.html", {"client": client})

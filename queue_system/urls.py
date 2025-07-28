@@ -37,6 +37,10 @@ urlpatterns = [
     path("employee/ticket/<int:ticket_id>/start/", views.start_service, name="start_service"),
     path("employee/ticket/<int:ticket_id>/complete/", views.complete_ticket, name="complete_ticket"),
     path("employee/ticket/<int:ticket_id>/cancel/", views.cancel_ticket, name="cancel_ticket"),
+    path("employee/ticket/<int:ticket_id>/repeat-sound/", views.repeat_sound, name="repeat_sound"),
+    path("employee/ticket/<int:ticket_id>/return/", views.return_to_queue, name="return_to_queue"),
+    path("employee/client/<int:client_id>/", views.client_profile, name="client_profile"),
+
 
     # --- SECTION ADMIN ---
     path('dashboard/admin/', views.admin_dashboard, name='admin_dashboard'),

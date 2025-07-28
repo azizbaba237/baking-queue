@@ -1,0 +1,57 @@
+{% extends 'base.html' %}
+{% block title %}Profil Client{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto p-10 bg-gradient-to-br from-bank-blue/10 to-bank-green/10 rounded-3xl shadow-2xl border border-bank-blue/30">
+
+  <!-- Bouton retour -->
+  <a href="{% url 'queue_system:employee_dashboard' %}" 
+     class="inline-flex items-center mb-8 px-5 py-3 font-semibold text-bank-blue border-2 border-bank-blue rounded-xl shadow-md 
+            hover:bg-bank-blue hover:text-white transition duration-300 ease-in-out active:scale-95">
+    <i class="fas fa-arrow-left mr-3 text-lg"></i> Retour au tableau de bord
+  </a>
+
+  <h1 class="text-4xl font-extrabold text-bank-dark-gray mb-12 text-center tracking-wide drop-shadow-md">
+    Profil Client
+  </h1>
+
+  <div class="grid grid-cols-1 sm:grid-cols-2 gap-10">
+
+    <div class="bg-white rounded-xl p-6 shadow-lg border border-bank-blue/20 hover:shadow-bank-blue/40 transition-shadow duration-300">
+      <h2 class="text-xl font-semibold text-bank-blue mb-3 flex items-center gap-2">
+        <i class="fas fa-user text-bank-blue"></i> Nom complet
+      </h2>
+      <p class="text-bank-dark-gray text-lg font-medium">{{ client.user.first_name }} {{ client.user.last_name }}</p>
+    </div>
+
+    <div class="bg-white rounded-xl p-6 shadow-lg border border-bank-blue/20 hover:shadow-bank-blue/40 transition-shadow duration-300">
+      <h2 class="text-xl font-semibold text-bank-blue mb-3 flex items-center gap-2">
+        <i class="fas fa-envelope text-bank-blue"></i> Email
+      </h2>
+      <p class="text-bank-dark-gray text-lg font-medium break-all">{{ client.user.email }}</p>
+    </div>
+
+    <div class="bg-white rounded-xl p-6 shadow-lg border border-bank-blue/20 hover:shadow-bank-blue/40 transition-shadow duration-300">
+      <h2 class="text-xl font-semibold text-bank-blue mb-3 flex items-center gap-2">
+        <i class="fas fa-id-badge text-bank-blue"></i> Type de client
+      </h2>
+      <p class="text-bank-dark-gray text-lg font-medium capitalize">{{ client.get_client_type_display }}</p>
+    </div>
+
+    <div class="bg-white rounded-xl p-6 shadow-lg border border-bank-blue/20 hover:shadow-bank-blue/40 transition-shadow duration-300">
+      <h2 class="text-xl font-semibold text-bank-blue mb-3 flex items-center gap-2">
+        <i class="fas fa-map-marker-alt text-bank-blue"></i> Adresse
+      </h2>
+      <p class="text-bank-dark-gray text-lg font-medium whitespace-pre-line">{{ client.address|default:"Non renseignée" }}</p>
+    </div>
+
+    <div class="bg-white rounded-xl p-6 shadow-lg border border-bank-blue/20 hover:shadow-bank-blue/40 transition-shadow duration-300 sm:col-span-2">
+      <h2 class="text-xl font-semibold text-bank-blue mb-3 flex items-center gap-2">
+        <i class="fas fa-birthday-cake text-bank-blue"></i> Date de naissance
+      </h2>
+      <p class="text-bank-dark-gray text-lg font-medium">{{ client.birth_date|date:"d/m/Y"|default:"Non renseignée" }}</p>
+    </div>
+
+  </div>
+</div>
+{% endblock %}
