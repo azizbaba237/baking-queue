@@ -33,8 +33,6 @@ class CustomUserCreationForm(UserCreationForm):
             self.fields['username'].widget.attrs.update({'placeholder': 'Nom d’utilisateur'})
             self.fields['password1'].widget.attrs.update({'placeholder': 'Mot de passe'})
             self.fields['password2'].widget.attrs.update({'placeholder': 'Confirmer le mot de passe'})
-            self.fields['employee_id'].widget.attrs.update({'placeholder': 'ID Employé (optionnel)'})
-            self.fields['hire_date'].widget.attrs.update({'placeholder': 'Date d’embauche'})
             
     def save(self, commit=True):
         user = super().save(commit=False)
@@ -82,14 +80,28 @@ class EmployeeCreationForm(UserCreationForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields['first_name'].widget.attrs.update({'placeholder': 'Prénom'})
-        self.fields['last_name'].widget.attrs.update({'placeholder': 'Nom'})
-        self.fields['email'].widget.attrs.update({'placeholder': 'Email'})
-        self.fields['phone'].widget.attrs.update({'placeholder': 'Téléphone'})
-        self.fields['username'].widget.attrs.update({'placeholder': 'Nom d’utilisateur'})
-        self.fields['password1'].widget.attrs.update({'placeholder': 'Mot de passe'})
-        self.fields['password2'].widget.attrs.update({'placeholder': 'Confirmer le mot de passe'})
+        placeholders = {
+        'first_name': 'Prénom',
+        'last_name': 'Nom',
+        'email': 'Email',
+        'phone': 'Téléphone',
+        'username': 'Nom d’utilisateur',
+        'password1': 'Mot de passe',
+        'password2': 'Confirmer le mot de passe',
+    }
+
+        for field_name, placeholder in placeholders.items():
+            self.fields[field_name].widget.attrs.update({'placeholder': placeholder, 'class': 'form-input'})
         
+        self.fields['employee_id'].widget.attrs.update({
+        'readonly': 'readonly',
+        'class': 'form-input'
+        })
+        
+        for field_name, field in self.fields.items():
+            if isinstance(field.widget, (forms.Select, forms.SelectDateWidget)):
+                field.widget.attrs.update({'class': 'form-select'})
+                
     def save(self, commit=True):
         user = super().save(commit=False)
         user.first_name = self.cleaned_data["first_name"]

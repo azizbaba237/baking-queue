@@ -76,4 +76,22 @@
   .status-cancelled {
     @apply bg-red-100 text-red-800 px-3 py-1 rounded-full text-sm font-medium;
   }
+
+  .form-input {
+    @apply w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm
+      bg-white text-bank-dark-gray 
+      focus:outline-none focus:ring-2 focus:ring-bank-blue focus:border-bank-blue 
+      dark:bg-white dark:border-bank-dark-gray dark:text-black;
+  }
+
+  .form-label {
+    @apply block text-sm font-medium text-bank-dark-gray dark:text-white mb-1;
+  }
+
+  .form-select {
+    @apply w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm
+      bg-white text-bank-dark-gray gap-x-2
+      focus:outline-none focus:ring-2 focus:ring-bank-blue focus:border-bank-blue
+      dark:bg-bank-darker-gray dark:border-bank-dark-gray dark:text-white;
+  }
 }

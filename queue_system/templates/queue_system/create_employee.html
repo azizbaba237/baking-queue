@@ -1,22 +1,68 @@
 {% extends 'base.html' %}
+{% load static %}
 {% block title %}Ajouter un Employé{% endblock %}
 
 {% block content %}
-<div class="max-w-xl mx-auto mt-10 bg-white p-6 rounded-lg shadow-lg">
-    <h2 class="text-2xl font-bold mb-4 text-bank-dark-gray">Ajouter un nouvel employé</h2>
-    <form method="post" novalidate>
-        {% csrf_token %}
-        {% for field in form %}
-            <div class="mb-4">
-                {{ field }}
-                {% if field.errors %}
-                    <p class="text-red-600 text-sm mt-1">{{ field.errors|striptags }}</p>
-                {% endif %}
-            </div>
-        {% endfor %}
-        <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded">
-            Créer l'employé
-        </button>
-    </form>
+<div x-data="{ showToast: true }" class="max-w-4xl mx-auto mt-14 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 shadow-2xl rounded-2xl overflow-hidden animate-fade-in">
+  <!-- En-tête -->
+  <div class="flex justify-between items-center px-8 py-6 border-b dark:border-gray-600 bg-gray-50 dark:bg-gray-800">
+    <h2 class="text-3xl font-bold text-bank-blue dark:text-white flex items-center gap-3">
+      <svg class="w-7 h-7 text-bank-blue dark:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+      </svg>
+      Ajouter un nouvel employé
+    </h2>
+    <a href="{% url 'queue_system:admin_dashboard' %}" class="text-sm text-gray-600 dark:text-gray-300 hover:underline">
+      ← Retour au tableau de bord
+    </a>
+  </div>
+
+  <!-- Toast de succès -->
+  {% if messages %}
+    <div x-show="showToast" x-transition.duration.500ms class="p-6">
+      {% for message in messages %}
+        <div class="alert-success flex items-center justify-between">
+          <span class="font-semibold">{{ message }}</span>
+          <button @click="showToast = false" class="text-xl leading-none">&times;</button>
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+
+  <!-- Formulaire -->
+  <form method="post" novalidate class="px-8 py-8 grid grid-cols-1 md:grid-cols-2 gap-6 bg-white dark:bg-gray-900">
+    {% csrf_token %}
+    
+    {% for field in form %}
+      <div class="col-span-1">
+        <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
+        {{ field }}
+        {% if field.help_text %}
+          <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">{{ field.help_text }}</p>
+        {% endif %}
+        {% if field.errors %}
+          <p class="text-sm text-red-600 mt-1">{{ field.errors|striptags }}</p>
+        {% endif %}
+      </div>
+    {% endfor %}
+
+    <!-- Bouton -->
+    <div class="md:col-span-2 pt-4">
+      <button type="submit" class="btn-primary w-full text-lg">
+        Créer l'employé
+      </button>
+    </div>
+  </form>
 </div>
+
+<style>
+  @keyframes fade-in {
+    0% { opacity: 0; transform: translateY(30px); }
+    100% { opacity: 1; transform: translateY(0); }
+  }
+  .animate-fade-in {
+    animation: fade-in 0.6s ease-out;
+  }
+</style>
+<script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
 {% endblock %}

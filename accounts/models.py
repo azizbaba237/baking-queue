@@ -69,7 +69,7 @@ class Employee(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     employee_id = models.CharField(max_length=20, unique=True)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='offline')
-    hire_date = models.DateField()
+    hire_date = models.DateField(null=False, blank=False)
     
     def __str__(self):
         return f"{self.user.first_name} {self.user.last_name} - {self.employee_id}"

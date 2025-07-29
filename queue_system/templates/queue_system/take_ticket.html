@@ -15,17 +15,17 @@
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
             <div class="bg-bank-light-gray rounded-lg p-4 text-center">
                 <i class="fas fa-clock text-2xl text-bank-blue mb-2"></i>
-                <div class="text-lg font-semibold">{{ service.estimated_duration }}min</div>
+                <div class="text-lg text-gray-800 font-semibold">{{ service.estimated_duration }}min</div>
                 <div class="text-sm text-bank-gray">Durée estimée</div>
             </div>
             <div class="bg-bank-light-gray rounded-lg p-4 text-center">
                 <i class="fas fa-users text-2xl text-bank-blue mb-2"></i>
-                <div class="text-lg font-semibold">{{ queue_length }}</div>
+                <div class="text-lg text-gray-800  font-semibold">{{ queue_length }}</div>
                 <div class="text-sm text-bank-gray">Personnes en attente</div>
             </div>
             <div class="bg-bank-light-gray rounded-lg p-4 text-center">
                 <i class="fas fa-hourglass-half text-2xl text-bank-blue mb-2"></i>
-                <div class="text-lg font-semibold">{{ estimated_wait }}min</div>
+                <div class="text-lg text-gray-800  font-semibold">{{ estimated_wait }}min</div>
                 <div class="text-sm text-bank-gray">Temps d'attente</div>
             </div>
         </div>

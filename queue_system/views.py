@@ -685,16 +685,14 @@ def admin_dashboard(request):
         'counters': counters,
         'evaluations': evaluations.order_by('-created_at')[:5],
     })
-    
+      
 # Vue pour créer un nouvel employé
 def create_employee(request):
     if request.method == "POST":
         form = EmployeeCreationForm(request.POST)
         if form.is_valid():
-            user = form.save(commit=False)
-            user.role = 'employee'
-            user.save()
-            Employee.objects.create(user=user)
+            form.save()
+            messages.success(request, "L'employé a bien été créé avec succès 🎉")
             return redirect('queue_system:admin_dashboard')  # redirige après création
     else:
         form = EmployeeCreationForm()

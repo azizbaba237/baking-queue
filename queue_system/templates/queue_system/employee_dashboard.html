@@ -10,8 +10,8 @@ Tableau de bord employé – Système de File d'Attente
   <!-- En‑tête -->
   <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
     <div>
-      <h1 class="text-3xl font-bold text-bank-dark-gray">Bonjour {{ request.user.first_name }} !</h1>
-      <p class="text-bank-gray mt-1">Suivez et gérez la file d’attente en temps réel</p>
+      <h1 class="text-3xl font-bold text-bank-dark-gray dark:text-white">Bonjour {{ request.user.first_name }} !</h1>
+      <p class="text-bank-gray mt-1 dark:text-white">Suivez et gérez la file d’attente en temps réel</p>
     </div>
     <form method="get">
       <button type="submit" class="btn-secondary">
@@ -24,7 +24,7 @@ Tableau de bord employé – Système de File d'Attente
 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
   
   <!-- En attente -->
-  <div class="bg-blue-100 border border-blue-300 rounded-2xl shadow-md p-5 flex flex-col items-center justify-center text-center">
+  <div class="bg-blue-300 border border-blue-500 rounded-2xl shadow-md p-5 flex flex-col items-center justify-center text-center">
     <div class="text-4xl text-blue-600 font-bold">{{ stats.waiting }}</div>
     <div class="text-blue-800 mt-1">En attente</div>
     <div class="mt-2 text-blue-500">
@@ -33,7 +33,7 @@ Tableau de bord employé – Système de File d'Attente
   </div>
 
   <!-- En service -->
-  <div class="bg-yellow-100 border border-yellow-300 rounded-2xl shadow-md p-5 flex flex-col items-center justify-center text-center">
+  <div class="bg-yellow-300 border border-yellow-500 rounded-2xl shadow-md p-5 flex flex-col items-center justify-center text-center">
     <div class="text-4xl text-yellow-600 font-bold">{{ stats.in_service }}</div>
     <div class="text-yellow-800 mt-1">En service</div>
     <div class="mt-2 text-yellow-500">
@@ -42,7 +42,7 @@ Tableau de bord employé – Système de File d'Attente
   </div>
 
   <!-- Terminés -->
-  <div class="bg-green-100 border border-green-300 rounded-2xl shadow-md p-5 flex flex-col items-center justify-center text-center">
+  <div class="bg-green-300 border border-green-500 rounded-2xl shadow-md p-5 flex flex-col items-center justify-center text-center">
     <div class="text-4xl text-green-600 font-bold">{{ stats.completed }}</div>
     <div class="text-green-800 mt-1">Terminés</div>
     <div class="mt-2 text-green-500">
@@ -51,7 +51,7 @@ Tableau de bord employé – Système de File d'Attente
   </div>
 
   <!-- Annulés -->
-  <div class="bg-red-100 border border-red-300 rounded-2xl shadow-md p-5 flex flex-col items-center justify-center text-center">
+  <div class="bg-red-300 border border-red-500 rounded-2xl shadow-md p-5 flex flex-col items-center justify-center text-center">
     <div class="text-4xl text-red-600 font-bold">{{ stats.cancelled }}</div>
     <div class="text-red-800 mt-1">Annulés</div>
     <div class="mt-2 text-red-500">
@@ -84,7 +84,7 @@ Tableau de bord employé – Système de File d'Attente
   <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
     <!-- Info ticket -->
     <div class="flex items-center gap-5">
-      <div class="w-36 h-20 rounded-xl bg-bank-blue flex items-center justify-center text-white text-3xl font-extrabold truncate">
+      <div class="w-40 h-20 rounded-xl bg-bank-blue flex items-center justify-center text-white text-3xl font-extrabold truncate">
         {{ current_ticket.ticket_number }}
       </div>
       <div>

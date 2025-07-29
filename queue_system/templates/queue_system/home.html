@@ -35,7 +35,7 @@
 
     <!-- Services Section -->
     <div>
-        <h2 class="text-3xl font-bold text-bank-dark-gray mb-8 text-center">Nos Services</h2>
+        <h2 class="text-3xl font-bold text-bank-dark-gray dark:text-white mb-8 text-center">Nos Services</h2>
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {% for service in services %}
             <a href="{% url 'queue_system:service_detail' service.id %}">
